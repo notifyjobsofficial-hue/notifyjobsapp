@@ -19,26 +19,26 @@ export const defaultAppSettings: AppSettings = {
   latestAppVersion: '1.0.0',
   forceUpdateUrl: 'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
 
-  supportEmail: 'support@notifyjobs.in',
-  supportWebsite: 'https://notifyjobs.in',
+  supportEmail: '',
+  supportWebsite: '',
 
-  whatsappUrl: 'https://whatsapp.com/channel/0029VaNotifyJobs',
-  whatsappEnabled: true,
-  telegramUrl: 'https://t.me/notifyjobs',
-  telegramEnabled: true,
-  youtubeUrl: 'https://youtube.com/@notifyjobs',
-  youtubeEnabled: true,
-  facebookUrl: 'https://facebook.com/notifyjobs',
+  whatsappUrl: '',
+  whatsappEnabled: false,
+  telegramUrl: '',
+  telegramEnabled: false,
+  youtubeUrl: '',
+  youtubeEnabled: false,
+  facebookUrl: '',
   facebookEnabled: false,
-  instagramUrl: 'https://instagram.com/notifyjobs',
-  instagramEnabled: true,
-  xUrl: 'https://x.com/notifyjobs',
-  xEnabled: true,
+  instagramUrl: '',
+  instagramEnabled: false,
+  xUrl: '',
+  xEnabled: false,
 
-  privacyUrl: 'https://notifyjobs.in/privacy',
-  termsUrl: 'https://notifyjobs.in/terms',
-  disclaimerUrl: 'https://notifyjobs.in/disclaimer',
-  contactUrl: 'https://notifyjobs.in/contact',
+  privacyUrl: '',
+  termsUrl: '',
+  disclaimerUrl: '',
+  contactUrl: '',
 
   rewardedAdsEnabled: true,
   rewardNotificationEnabled: true,
@@ -46,7 +46,7 @@ export const defaultAppSettings: AppSettings = {
   rewardPromptText: 'Watch a short ad to open the official notification.',
   rewardButtonText: 'Watch Ad',
 
-  shareBaseUrl: 'https://notifyjobs.in/job',
+  shareBaseUrl: '',
   playStoreUrl: 'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
   disclaimer:
     'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
@@ -55,27 +55,23 @@ export const defaultAppSettings: AppSettings = {
 let memorySettings = { ...defaultAppSettings };
 
 export async function fetchAppSettings(): Promise<AppSettings> {
-  if (!isFirebaseConfigured) {
-    return memorySettings;
-  }
-
   try {
     const snap = await getDoc(doc(db, 'app_settings', 'main'));
     if (snap.exists()) {
-      return { ...defaultAppSettings, ...snap.data() } as AppSettings;
+      const data = { ...defaultAppSettings, ...snap.data() } as AppSettings;
+      memorySettings = data;
+      return data;
     }
-    return memorySettings;
+    return defaultAppSettings;
   } catch (err) {
-    console.error('Error reading app_settings:', err);
-    return memorySettings;
+    console.error('Error reading app_settings from Firestore:', err);
+    return defaultAppSettings;
   }
 }
 
 export async function saveAppSettings(settings: Partial<AppSettings>): Promise<void> {
   const merged = { ...memorySettings, ...settings };
   memorySettings = merged;
-
-  if (!isFirebaseConfigured) return;
 
   try {
     await setDoc(doc(db, 'app_settings', 'main'), merged, { merge: true });
@@ -102,10 +98,6 @@ let memorySections: HomepageSection[] = [
 ];
 
 export async function fetchHomepageSections(): Promise<HomepageSection[]> {
-  if (!isFirebaseConfigured) {
-    return memorySections.sort((a, b) => a.order - b.order);
-  }
-
   try {
     const q = query(collection(db, 'homepage_sections'), orderBy('order', 'asc'));
     const snap = await getDocs(q);
@@ -113,15 +105,13 @@ export async function fetchHomepageSections(): Promise<HomepageSection[]> {
     snap.forEach((d) => list.push({ id: d.id, ...d.data() } as HomepageSection));
     return list.length > 0 ? list : memorySections;
   } catch (err) {
-    console.error('Error loading homepage sections:', err);
+    console.error('Error loading homepage sections from Firestore:', err);
     return memorySections;
   }
 }
 
 export async function saveHomepageSections(sections: HomepageSection[]): Promise<void> {
   memorySections = sections;
-  if (!isFirebaseConfigured) return;
-
   try {
     for (const sec of sections) {
       await setDoc(doc(db, 'homepage_sections', sec.id), sec, { merge: true });

@@ -177,14 +177,14 @@ export const SocialAndSupportPage: React.FC<SocialAndSupportPageProps> = ({
             type="email"
             value={settings.supportEmail || ''}
             onChange={(e) => handleUpdate('supportEmail', e.target.value)}
-            placeholder="support@notifyjobs.in"
+            placeholder="support@example.com"
           />
           <AdminInput
             label="Official Support Website"
             type="url"
             value={settings.supportWebsite || ''}
             onChange={(e) => handleUpdate('supportWebsite', e.target.value)}
-            placeholder="https://notifyjobs.in"
+            placeholder="https://example.com"
           />
         </div>
       </AdminCard>
@@ -199,25 +199,25 @@ export const SocialAndSupportPage: React.FC<SocialAndSupportPageProps> = ({
             label="Privacy Policy URL"
             value={settings.privacyUrl || ''}
             onChange={(e) => handleUpdate('privacyUrl', e.target.value)}
-            placeholder="https://notifyjobs.in/privacy"
+            placeholder="https://example.com/privacy"
           />
           <AdminInput
             label="Terms of Service URL"
             value={settings.termsUrl || ''}
             onChange={(e) => handleUpdate('termsUrl', e.target.value)}
-            placeholder="https://notifyjobs.in/terms"
+            placeholder="https://example.com/terms"
           />
           <AdminInput
             label="Disclaimer URL"
             value={settings.disclaimerUrl || ''}
             onChange={(e) => handleUpdate('disclaimerUrl', e.target.value)}
-            placeholder="https://notifyjobs.in/disclaimer"
+            placeholder="https://example.com/disclaimer"
           />
           <AdminInput
             label="Contact Us URL"
             value={settings.contactUrl || ''}
             onChange={(e) => handleUpdate('contactUrl', e.target.value)}
-            placeholder="https://notifyjobs.in/contact"
+            placeholder="https://example.com/contact"
           />
         </div>
       </AdminCard>

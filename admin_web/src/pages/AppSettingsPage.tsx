@@ -165,7 +165,7 @@ export const AppSettingsPage: React.FC<AppSettingsPageProps> = ({
             label="Public Share URL Base"
             value={settings.shareBaseUrl}
             onChange={(e) => handleUpdate('shareBaseUrl', e.target.value)}
-            placeholder="https://notifyjobs.in/job"
+            placeholder="https://example.com/job"
             hint="Used when users share jobs on WhatsApp, Telegram, or Copy Link"
           />
 

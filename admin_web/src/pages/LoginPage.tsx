@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../firebase/config';
 import { AdminInput } from '../components/common/AdminInput';
 import { AdminButton } from '../components/common/AdminButton';
@@ -22,19 +22,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     if (!isFirebaseConfigured) {
-      // Local preview / initial demo login
-      setTimeout(() => {
-        setLoading(false);
-        if (email && password) {
-          onLoginSuccess({
-            email,
-            role: email.includes('editor') ? 'editor' : 'super_admin',
-            uid: 'demo-admin-uid-1',
-          });
-        } else {
-          setError('Please enter both email and password.');
-        }
-      }, 600);
+      setError(
+        'Firebase configuration is required. Please enter your Firebase environment variables in Cloudflare Pages.'
+      );
+      setLoading(false);
       return;
     }
 
@@ -43,43 +34,61 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       const user = userCredential.user;
 
       // Verify active admin record in Firestore admins/{uid}
-      const adminDocSnap = await getDoc(doc(db, 'admins', user.uid));
-      if (!adminDocSnap.exists()) {
-        setError('Access denied. No admin account registered for this email.');
-        setLoading(false);
-        return;
-      }
+      const adminDocRef = doc(db, 'admins', user.uid);
+      const adminDocSnap = await getDoc(adminDocRef);
 
-      const adminData = adminDocSnap.data();
-      if (adminData.active !== true) {
-        setError('Your admin account has been deactivated. Please contact the administrator.');
-        setLoading(false);
-        return;
-      }
+      if (adminDocSnap.exists()) {
+        const adminData = adminDocSnap.data();
+        if (adminData.active !== true) {
+          setError('Your admin account has been deactivated. Please contact the administrator.');
+          setLoading(false);
+          return;
+        }
 
-      onLoginSuccess({
-        email: user.email || email,
-        role: adminData.role || 'editor',
-        uid: user.uid,
-      });
+        onLoginSuccess({
+          email: user.email || email,
+          role: adminData.role || 'super_admin',
+          uid: user.uid,
+        });
+      } else {
+        // If admins collection is empty, register the first authenticated user as super_admin
+        const existingAdmins = await getDocs(collection(db, 'admins'));
+        if (existingAdmins.empty) {
+          const initialAdmin = {
+            uid: user.uid,
+            email: user.email || email,
+            displayName: user.displayName || email.split('@')[0],
+            role: 'super_admin' as const,
+            active: true,
+            createdAt: new Date().toISOString(),
+          };
+          await setDoc(adminDocRef, initialAdmin, { merge: true });
+
+          onLoginSuccess({
+            email: user.email || email,
+            role: 'super_admin',
+            uid: user.uid,
+          });
+        } else {
+          setError(
+            `Access denied. Account (${user.email}) is not registered in the admin team.`
+          );
+          setLoading(false);
+          return;
+        }
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(
-        err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
+        err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found'
           ? 'Invalid email or password.'
+          : err.code === 'auth/network-request-failed'
+          ? 'Network error. Please check your internet connection.'
           : err.message || 'Login failed. Please check credentials.'
       );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickDemo = (role: 'super_admin' | 'editor') => {
-    onLoginSuccess({
-      email: role === 'super_admin' ? 'admin@notifyjobs.in' : 'editor@notifyjobs.in',
-      role,
-      uid: role === 'super_admin' ? 'demo-super-admin' : 'demo-editor',
-    });
   };
 
   return (
@@ -112,7 +121,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               label="Admin Email"
               type="email"
               required
-              placeholder="admin@notifyjobs.in"
+              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<Mail className="w-4 h-4" />}
@@ -141,33 +150,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </div>
           </form>
 
-          {/* Quick Demo Access (Active if Firebase keys not configured or for quick testing) */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-3">
-              One-Click Instant Access
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <AdminButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickDemo('super_admin')}
-              >
-                Super Admin
-              </AdminButton>
-              <AdminButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickDemo('editor')}
-              >
-                Editor
-              </AdminButton>
-            </div>
-            <p className="text-[11px] text-center text-slate-400 mt-3">
-              Production credentials authenticate against Firebase Auth &amp; Firestore{' '}
-              <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px]">admins/{'{uid}'}</code>
-            </p>
+          <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-center gap-1.5 text-slate-400 text-xs">
+            <ShieldCheck className="w-4 h-4 text-[#159B76]" />
+            <span>Protected with Firebase Authentication &amp; Firestore Security Rules</span>
           </div>
         </div>
       </div>

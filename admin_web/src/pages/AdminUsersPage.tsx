@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Plus, ShieldCheck, UserX, Check, AlertCircle } from 'lucide-react';
+import { collection, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { AdminUser } from '../types';
 import { AdminCard } from '../components/common/AdminCard';
 import { AdminButton } from '../components/common/AdminButton';
@@ -13,44 +15,56 @@ interface AdminUsersPageProps {
 }
 
 export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ currentUserRole }) => {
-  const [users, setUsers] = useState<AdminUser[]>([
-    {
-      uid: 'admin-1',
-      email: 'admin@notifyjobs.in',
-      displayName: 'Lead Architect',
-      role: 'super_admin',
-      active: true,
-      createdAt: '2026-09-01T00:00:00.000Z',
-      lastLoginAt: '2026-09-12T18:30:00.000Z',
-    },
-    {
-      uid: 'editor-1',
-      email: 'editor@notifyjobs.in',
-      displayName: 'Content Editor',
-      role: 'editor',
-      active: true,
-      createdAt: '2026-09-05T00:00:00.000Z',
-      lastLoginAt: '2026-09-11T14:10:00.000Z',
-    },
-  ]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState<'super_admin' | 'editor'>('editor');
 
-  const handleToggleActive = (uid: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.uid === uid ? { ...u, active: !u.active } : u))
-    );
+  const loadAdminUsers = async () => {
+    setLoading(true);
+    try {
+      const snap = await getDocs(collection(db, 'admins'));
+      const list: AdminUser[] = [];
+      snap.forEach((d) => {
+        list.push({ uid: d.id, ...d.data() } as AdminUser);
+      });
+      setUsers(list);
+    } catch (err) {
+      console.error('Error loading admin users from Firestore:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadAdminUsers();
+  }, []);
+
+  const handleToggleActive = async (uid: string) => {
+    const user = users.find((u) => u.uid === uid);
+    if (!user) return;
+    const newActive = !user.active;
+
+    try {
+      await updateDoc(doc(db, 'admins', uid), { active: newActive });
+      setUsers((prev) =>
+        prev.map((u) => (u.uid === uid ? { ...u, active: newActive } : u))
+      );
+    } catch (err) {
+      console.error('Failed to update admin status:', err);
+    }
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
+    const targetUid = `admin-${Date.now()}`;
     const newUser: AdminUser = {
-      uid: `admin-${Date.now()}`,
+      uid: targetUid,
       email,
       displayName: displayName || email.split('@')[0],
       role,
@@ -58,11 +72,16 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ currentUserRole 
       createdAt: new Date().toISOString(),
     };
 
-    setUsers((prev) => [...prev, newUser]);
-    setEmail('');
-    setDisplayName('');
-    setRole('editor');
-    setModalOpen(false);
+    try {
+      await setDoc(doc(db, 'admins', targetUid), newUser, { merge: true });
+      setUsers((prev) => [...prev, newUser]);
+      setEmail('');
+      setDisplayName('');
+      setRole('editor');
+      setModalOpen(false);
+    } catch (err) {
+      console.error('Failed to add admin user to Firestore:', err);
+    }
   };
 
   if (currentUserRole !== 'super_admin') {
@@ -97,48 +116,56 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ currentUserRole 
       </div>
 
       <AdminCard noPadding>
-        <div className="divide-y divide-slate-100">
-          {users.map((user) => (
-            <div
-              key={user.uid}
-              className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-50/70"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
-                  {user.displayName.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-slate-900 truncate">
-                      {user.displayName}
-                    </p>
-                    <AdminBadge
-                      variant={user.role === 'super_admin' ? 'primary' : 'info'}
-                      size="sm"
-                    >
-                      {user.role === 'super_admin' ? 'Super Admin' : 'Editor'}
-                    </AdminBadge>
-                    <AdminBadge
-                      variant={user.active ? 'success' : 'danger'}
-                      size="sm"
-                    >
-                      {user.active ? 'Active' : 'Deactivated'}
-                    </AdminBadge>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5">{user.email}</p>
-                </div>
-              </div>
-
-              <AdminButton
-                variant={user.active ? 'outline' : 'success'}
-                size="sm"
-                onClick={() => handleToggleActive(user.uid)}
+        {users.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400">
+            {loading
+              ? 'Loading administrators...'
+              : 'No team members added yet. Authenticated administrators in the Firestore admins collection will appear here.'}
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {users.map((user) => (
+              <div
+                key={user.uid}
+                className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-50/70"
               >
-                {user.active ? 'Deactivate' : 'Reactivate'}
-              </AdminButton>
-            </div>
-          ))}
-        </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
+                    {(user.displayName || user.email || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-900 truncate">
+                        {user.displayName || user.email}
+                      </p>
+                      <AdminBadge
+                        variant={user.role === 'super_admin' ? 'primary' : 'info'}
+                        size="sm"
+                      >
+                        {user.role === 'super_admin' ? 'Super Admin' : 'Editor'}
+                      </AdminBadge>
+                      <AdminBadge
+                        variant={user.active ? 'success' : 'danger'}
+                        size="sm"
+                      >
+                        {user.active ? 'Active' : 'Deactivated'}
+                      </AdminBadge>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">{user.email}</p>
+                  </div>
+                </div>
+
+                <AdminButton
+                  variant={user.active ? 'outline' : 'success'}
+                  size="sm"
+                  onClick={() => handleToggleActive(user.uid)}
+                >
+                  {user.active ? 'Deactivate' : 'Reactivate'}
+                </AdminButton>
+              </div>
+            ))}
+          </div>
+        )}
       </AdminCard>
 
       <AdminModal
@@ -154,7 +181,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ currentUserRole 
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="editor@notifyjobs.in"
+            placeholder="editor@example.com"
           />
           <AdminInput
             label="Display Name"

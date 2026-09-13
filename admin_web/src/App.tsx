@@ -45,19 +45,17 @@ import {
   fetchNotificationLogs,
   sendPushNotification,
 } from './services/workerService';
-import { auth, onAuthStateChanged } from './firebase/config';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { auth, db, onAuthStateChanged } from './firebase/config';
 
 export function App() {
-  // Authentication State
+  // Authentication State (Enforced via Firebase Auth; null by default)
   const [currentUser, setCurrentUser] = useState<{
     email: string;
     role: 'super_admin' | 'editor';
     uid: string;
-  } | null>({
-    email: 'admin@notifyjobs.in',
-    role: 'super_admin',
-    uid: 'demo-admin-1',
-  });
+  } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
@@ -85,7 +83,7 @@ export function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Load Initial Data
+  // Load Initial Data from Firestore
   const loadAllData = async () => {
     setLoadingData(true);
     try {
@@ -102,15 +100,59 @@ export function App() {
       setAppSettings(settings);
       setLogs(nLogs);
     } catch (err) {
-      console.error('Error loading data:', err);
-      addToast('error', 'Failed to load initial data');
+      console.error('Error loading data from Firestore:', err);
+      addToast('error', 'Failed to load data from Firestore');
     } finally {
       setLoadingData(false);
     }
   };
 
+  // Listen to Firebase Auth state
   useEffect(() => {
-    loadAllData();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const adminDocRef = doc(db, 'admins', user.uid);
+          const adminDoc = await getDoc(adminDocRef);
+
+          if (adminDoc.exists() && adminDoc.data().active === true) {
+            const data = adminDoc.data();
+            setCurrentUser({
+              email: user.email || '',
+              role: data.role || 'super_admin',
+              uid: user.uid,
+            });
+            await loadAllData();
+          } else {
+            // Check if admins collection is empty (initial setup bootstrap)
+            const existing = await getDocs(collection(db, 'admins'));
+            if (existing.empty) {
+              const bootstrapAdmin = {
+                uid: user.uid,
+                email: user.email || '',
+                displayName: user.displayName || user.email?.split('@')[0] || 'Super Admin',
+                role: 'super_admin' as const,
+                active: true,
+                createdAt: new Date().toISOString(),
+              };
+              await setDoc(adminDocRef, bootstrapAdmin, { merge: true });
+              setCurrentUser(bootstrapAdmin);
+              await loadAllData();
+            } else {
+              setCurrentUser(null);
+            }
+          }
+        } catch (e) {
+          console.error('Error verifying admin auth state:', e);
+          setCurrentUser(null);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Handlers
@@ -120,7 +162,7 @@ export function App() {
     pushTopic: string
   ) => {
     try {
-      const id = await saveContent(item, currentUser?.email || 'admin@notifyjobs.in');
+      const id = await saveContent(item, currentUser?.email || 'Admin');
       addToast('success', 'Content Saved Successfully', `Document ID: ${id}`);
 
       // Dispatch push if requested (Specification 153)
@@ -187,6 +229,17 @@ export function App() {
     setAppSettings((prev) => ({ ...prev, ...newSettings }));
     addToast('success', 'App settings updated in real-time');
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-white">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-slate-400">Verifying Admin Session...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If user is not logged in
   if (!currentUser) {

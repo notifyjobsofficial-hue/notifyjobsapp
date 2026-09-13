@@ -49,31 +49,31 @@ class AppSettingsModel {
     this.latestAppVersion = '1.0.0',
     this.forceUpdateUrl =
         'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
-    this.supportEmail = 'support@notifyjobs.in',
-    this.supportWebsite = 'https://notifyjobs.in',
-    this.whatsappUrl = 'https://whatsapp.com/channel/0029VaNotifyJobs',
+    this.supportEmail = '',
+    this.supportWebsite = '',
+    this.whatsappUrl = '',
     this.whatsappEnabled = true,
-    this.telegramUrl = 'https://t.me/notifyjobs',
+    this.telegramUrl = '',
     this.telegramEnabled = true,
-    this.youtubeUrl = 'https://youtube.com/@notifyjobs',
+    this.youtubeUrl = '',
     this.youtubeEnabled = true,
-    this.facebookUrl = 'https://facebook.com/notifyjobs',
+    this.facebookUrl = '',
     this.facebookEnabled = false,
-    this.instagramUrl = 'https://instagram.com/notifyjobs',
+    this.instagramUrl = '',
     this.instagramEnabled = true,
-    this.xUrl = 'https://x.com/notifyjobs',
+    this.xUrl = '',
     this.xEnabled = true,
-    this.privacyUrl = 'https://notifyjobs.in/privacy',
-    this.termsUrl = 'https://notifyjobs.in/terms',
-    this.disclaimerUrl = 'https://notifyjobs.in/disclaimer',
-    this.contactUrl = 'https://notifyjobs.in/contact',
+    this.privacyUrl = '',
+    this.termsUrl = '',
+    this.disclaimerUrl = '',
+    this.contactUrl = '',
     this.rewardedAdsEnabled = true,
     this.rewardNotificationEnabled = true,
     this.rewardUnlockMinutes = 30,
     this.rewardPromptText =
         'Watch a short ad to open the official notification.',
     this.rewardButtonText = 'Watch Ad',
-    this.shareBaseUrl = 'https://notifyjobs.in/job',
+    this.shareBaseUrl = '',
     this.playStoreUrl =
         'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
     this.disclaimer =
@@ -95,9 +95,9 @@ class AppSettingsModel {
       latestAppVersion: map['latestAppVersion']?.toString() ?? '1.0.0',
       forceUpdateUrl: map['forceUpdateUrl']?.toString() ??
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
-      supportEmail: map['supportEmail']?.toString() ?? 'support@notifyjobs.in',
+      supportEmail: map['supportEmail']?.toString() ?? '',
       supportWebsite:
-          map['supportWebsite']?.toString() ?? 'https://notifyjobs.in',
+          map['supportWebsite']?.toString() ?? '',
       whatsappUrl: map['whatsappUrl']?.toString() ?? '',
       whatsappEnabled: map['whatsappEnabled'] != false,
       telegramUrl: map['telegramUrl']?.toString() ?? '',
@@ -111,12 +111,11 @@ class AppSettingsModel {
       xUrl: map['xUrl']?.toString() ?? '',
       xEnabled: map['xEnabled'] != false,
       privacyUrl:
-          map['privacyUrl']?.toString() ?? 'https://notifyjobs.in/privacy',
-      termsUrl: map['termsUrl']?.toString() ?? 'https://notifyjobs.in/terms',
-      disclaimerUrl: map['disclaimerUrl']?.toString() ??
-          'https://notifyjobs.in/disclaimer',
+          map['privacyUrl']?.toString() ?? '',
+      termsUrl: map['termsUrl']?.toString() ?? '',
+      disclaimerUrl: map['disclaimerUrl']?.toString() ?? '',
       contactUrl:
-          map['contactUrl']?.toString() ?? 'https://notifyjobs.in/contact',
+          map['contactUrl']?.toString() ?? '',
       rewardedAdsEnabled: map['rewardedAdsEnabled'] != false,
       rewardNotificationEnabled: map['rewardNotificationEnabled'] != false,
       rewardUnlockMinutes:
@@ -125,7 +124,7 @@ class AppSettingsModel {
           'Watch a short ad to open the official notification.',
       rewardButtonText: map['rewardButtonText']?.toString() ?? 'Watch Ad',
       shareBaseUrl:
-          map['shareBaseUrl']?.toString() ?? 'https://notifyjobs.in/job',
+          map['shareBaseUrl']?.toString() ?? '',
       playStoreUrl: map['playStoreUrl']?.toString() ??
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
       disclaimer: map['disclaimer']?.toString() ??

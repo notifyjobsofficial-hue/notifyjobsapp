@@ -1,33 +1,11 @@
-import { auth } from '../firebase/config';
+import { collection, doc, getDocs, setDoc, query, orderBy, limit } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 import { NotificationLog } from '../types';
 
 // Cloudflare Worker URL (Can be set via VITE_FCM_WORKER_URL or default to localhost / worker domain)
 const WORKER_URL = import.meta.env.VITE_FCM_WORKER_URL || 'https://notify-jobs-fcm-worker.workers.dev';
 
-let memoryLogs: NotificationLog[] = [
-  {
-    id: 'log-1',
-    title: 'SSC CGL 2026 Notification Out!',
-    body: '8,200 Group B & C Vacancies announced. Last date to apply is 30 Sep.',
-    topic: 'ssc',
-    contentId: 'ssc-cgl-2026',
-    sentAt: '2026-09-01T10:05:00.000Z',
-    sentBy: 'admin@notifyjobs.in',
-    status: 'success',
-    messageId: 'projects/notify-jobs-app/messages/msg-8472910',
-  },
-  {
-    id: 'log-2',
-    title: 'Andaman & Nicobar Police Recruitment 2026',
-    body: '340 SI & Constable Vacancies in Port Blair. Apply online now.',
-    topic: 'andaman',
-    contentId: 'andaman-police-si-2026',
-    sentAt: '2026-09-05T09:15:00.000Z',
-    sentBy: 'admin@notifyjobs.in',
-    status: 'success',
-    messageId: 'projects/notify-jobs-app/messages/msg-9182371',
-  },
-];
+let memoryLogs: NotificationLog[] = [];
 
 export async function checkWorkerHealth(): Promise<{ status: string; serviceAccountConfigured?: boolean; error?: string }> {
   try {
@@ -71,6 +49,8 @@ export async function sendPushNotification(params: {
       : undefined,
   };
 
+  const currentEmail = auth.currentUser?.email || 'Admin';
+
   try {
     const res = await fetch(`${WORKER_URL}/api/notify/send`, {
       method: 'POST',
@@ -92,11 +72,18 @@ export async function sendPushNotification(params: {
       contentId: params.contentId,
       imageUrl: params.imageUrl,
       sentAt: new Date().toISOString(),
-      sentBy: auth.currentUser?.email || 'admin@notifyjobs.in',
+      sentBy: currentEmail,
       status: res.ok ? 'success' : 'failed',
       messageId: data.messageId,
       error: data.error,
     };
+
+    try {
+      await setDoc(doc(db, 'notification_logs', logEntry.id), logEntry);
+    } catch (e) {
+      console.warn('Could not save notification log to Firestore:', e);
+    }
+
     memoryLogs.unshift(logEntry);
 
     if (!res.ok) {
@@ -105,7 +92,6 @@ export async function sendPushNotification(params: {
 
     return { success: true, messageId: data.messageId };
   } catch (err: any) {
-    // If worker is not reachable or still in local dev, record log with notice
     const logEntry: NotificationLog = {
       id: `log-${Date.now()}`,
       title: params.title,
@@ -114,20 +100,34 @@ export async function sendPushNotification(params: {
       contentId: params.contentId,
       imageUrl: params.imageUrl,
       sentAt: new Date().toISOString(),
-      sentBy: auth.currentUser?.email || 'admin@notifyjobs.in',
-      status: 'success', // Simulated success in local development
-      messageId: `dev-simulated-${Date.now()}`,
-      error: undefined,
+      sentBy: currentEmail,
+      status: 'failed',
+      error: err?.message || 'Worker unreachable',
     };
+
+    try {
+      await setDoc(doc(db, 'notification_logs', logEntry.id), logEntry);
+    } catch (_) {}
+
     memoryLogs.unshift(logEntry);
 
     return {
-      success: true,
-      messageId: `simulated-dev-${Date.now()}`,
+      success: false,
+      error: err?.message || 'Notification service temporarily unreachable',
     };
   }
 }
 
 export async function fetchNotificationLogs(): Promise<NotificationLog[]> {
-  return memoryLogs;
+  try {
+    const q = query(collection(db, 'notification_logs'), orderBy('sentAt', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    const logs: NotificationLog[] = [];
+    snap.forEach((d) => logs.push({ id: d.id, ...d.data() } as NotificationLog));
+    memoryLogs = logs;
+    return logs;
+  } catch (err) {
+    console.error('Error loading notification logs from Firestore:', err);
+    return memoryLogs;
+  }
 }

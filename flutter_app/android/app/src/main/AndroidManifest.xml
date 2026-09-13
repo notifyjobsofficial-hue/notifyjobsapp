@@ -41,15 +41,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Deep link intent filter for Notify Jobs (Specification 90) -->
-            <intent-filter android:autoVerify="true">
+            <!-- Deep link intent filter for Notify Jobs -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
-                    android:scheme="https"
-                    android:host="notifyjobs.in"
-                    android:pathPrefix="/job"/>
+                    android:scheme="notifyjobs"
+                    android:host="open"/>
             </intent-filter>
         </activity>
 

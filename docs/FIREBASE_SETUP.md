@@ -102,7 +102,7 @@ firebase deploy --only firestore:indexes
 To avoid weak hardcoded passwords in source repositories, follow this secure bootstrap procedure:
 
 1. In the Firebase Console, go to **Authentication > Users** and click **Add user**.
-2. Enter your primary administrator email (e.g., `admin@notifyjobs.in`) and a strong, unique password. Click **Add user**.
+2. Enter your primary administrator email (e.g., `admin@yourdomain.com`) and a strong, unique password. Click **Add user**.
 3. Copy the generated **User UID** (e.g. `4k9J2mP...`).
 4. In **Firestore Database**, create a document in the `admins` collection with that exact UID:
    - **Collection ID**: `admins`
@@ -111,7 +111,7 @@ To avoid weak hardcoded passwords in source repositories, follow this secure boo
      ```json
      {
        "uid": "[PASTE_USER_UID]",
-       "email": "admin@notifyjobs.in",
+       "email": "admin@yourdomain.com",
        "displayName": "Super Administrator",
        "role": "super_admin",
        "active": true,

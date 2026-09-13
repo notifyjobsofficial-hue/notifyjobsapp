@@ -20,7 +20,7 @@ class NjShareSheet extends StatelessWidget {
   static Future<void> show(
     BuildContext context, {
     required ContentModel content,
-    String shareBaseUrl = 'https://notifyjobs.in/job',
+    String shareBaseUrl = '',
   }) {
     HapticFeedback.selectionClick();
     return showModalBottomSheet(
@@ -54,21 +54,23 @@ class NjShareSheet extends StatelessWidget {
       buffer.writeln('Last Date: ${content.displayLastDate}');
     }
 
-    buffer.writeln();
-    buffer.writeln('View full details on Notify Jobs:');
-    final base =
-        shareBaseUrl.isNotEmpty ? shareBaseUrl : 'https://notifyjobs.in/job';
-    final cleanBase = base.endsWith('/') ? base : '$base/';
-    buffer.writeln('$cleanBase${content.slug}');
+    final url = _getShareUrl();
+    if (url.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('View full details:');
+      buffer.writeln(url);
+    }
 
     return buffer.toString().trim();
   }
 
   String _getShareUrl() {
-    final base =
-        shareBaseUrl.isNotEmpty ? shareBaseUrl : 'https://notifyjobs.in/job';
-    final cleanBase = base.endsWith('/') ? base : '$base/';
-    return '$cleanBase${content.slug}';
+    if (shareBaseUrl.isNotEmpty) {
+      final cleanBase =
+          shareBaseUrl.endsWith('/') ? shareBaseUrl : '$shareBaseUrl/';
+      return '$cleanBase${content.slug}';
+    }
+    return content.sourceUrl ?? '';
   }
 
   @override

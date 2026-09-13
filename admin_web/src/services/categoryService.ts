@@ -27,10 +27,6 @@ let memoryCategories: Category[] = [
 ];
 
 export async function fetchCategories(): Promise<Category[]> {
-  if (!isFirebaseConfigured) {
-    return memoryCategories;
-  }
-
   try {
     const q = query(collection(db, COLLECTION_NAME), orderBy('order', 'asc'));
     const snap = await getDocs(q);
@@ -55,15 +51,11 @@ export async function saveCategory(category: Partial<Category>): Promise<void> {
     isActive: category.isActive ?? true,
   };
 
-  if (!isFirebaseConfigured) {
+  try {
+    await setDoc(doc(db, COLLECTION_NAME, id), payload, { merge: true });
     const idx = memoryCategories.findIndex((c) => c.id === id);
     if (idx >= 0) memoryCategories[idx] = payload;
     else memoryCategories.push(payload);
-    return;
-  }
-
-  try {
-    await setDoc(doc(db, COLLECTION_NAME, id), payload, { merge: true });
   } catch (err) {
     console.error('Error saving category to Firestore:', err);
     const idx = memoryCategories.findIndex((c) => c.id === id);
@@ -73,14 +65,10 @@ export async function saveCategory(category: Partial<Category>): Promise<void> {
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  if (!isFirebaseConfigured) {
-    memoryCategories = memoryCategories.filter((c) => c.id !== id);
-    return;
-  }
-
   try {
     await deleteDoc(doc(db, COLLECTION_NAME, id));
+    memoryCategories = memoryCategories.filter((c) => c.id !== id);
   } catch (err) {
-    console.error('Error deleting category:', err);
+    console.error('Error deleting category from Firestore:', err);
   }
 }

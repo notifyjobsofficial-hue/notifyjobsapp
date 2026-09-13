@@ -78,7 +78,7 @@ void main() {
         'minimumAppVersion': '1.0.0',
         'forceUpdate': false,
         'maintenanceMode': false,
-        'supportEmail': 'help@notifyjobs.in',
+        'supportEmail': 'help@example.com',
         'rewardedAdsEnabled': true,
         'rewardUnlockMinutes': 30,
       };
@@ -87,7 +87,7 @@ void main() {
 
       expect(settings.appTitle, 'Notify Jobs');
       expect(settings.maintenanceMode, false);
-      expect(settings.supportEmail, 'help@notifyjobs.in');
+      expect(settings.supportEmail, 'help@example.com');
       expect(settings.rewardedAdsEnabled, true);
       expect(settings.rewardUnlockMinutes, 30);
     });

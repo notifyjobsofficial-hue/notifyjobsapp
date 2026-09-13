@@ -38,11 +38,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
             isFirebaseConfigured
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-amber-50 text-amber-700 border border-amber-200'
+              : 'bg-rose-50 text-rose-700 border border-rose-200'
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>{isFirebaseConfigured ? 'Live Firebase' : 'Demo Memory Mode'}</span>
+          <span>{isFirebaseConfigured ? 'Firebase Connected' : 'Config Required'}</span>
         </div>
 
         {onOpenMobilePreview && (

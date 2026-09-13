@@ -65,7 +65,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onNavigate,
   isOpen,
   onClose,
-  userEmail = 'admin@notifyjobs.in',
+  userEmail = 'Admin',
   userRole = 'super_admin',
   onLogout,
 }) => {
