@@ -94,13 +94,17 @@ class NjBadge extends StatelessWidget {
             icon!,
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-              letterSpacing: -0.1,
+          Flexible(
+            child: Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                letterSpacing: -0.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

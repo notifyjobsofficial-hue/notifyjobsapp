@@ -25,6 +25,7 @@ class JobsScreen extends ConsumerStatefulWidget {
 
 class _JobsScreenState extends ConsumerState<JobsScreen> {
   late String _selectedChip;
+  String _andamanSubFilter = 'All';
 
   // Filter bottom sheet state
   String _selectedQualification = 'All';
@@ -241,16 +242,16 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
     // Filter jobs
     final filteredJobs = allContent.where((item) {
       if (item.contentType != 'government_job' &&
-          item.contentType != 'private_job') {
+          item.contentType != 'private_job' &&
+          item.contentType != 'andaman_job') {
         return false;
       }
 
       // Chip Filter
       if (_selectedChip == 'Andaman') {
-        final matches = item.categoryIds.contains('andaman-nicobar') ||
-            item.location.toLowerCase().contains('andaman') ||
-            item.location.toLowerCase().contains('port blair');
-        if (!matches) return false;
+        if (!item.isAndamanJob) return false;
+        if (_andamanSubFilter == 'Govt' && !item.isGovernmentJob) return false;
+        if (_andamanSubFilter == 'Private' && !item.isPrivateJob) return false;
       } else if (_selectedChip == 'SSC') {
         if (!item.categoryIds.contains('ssc')) return false;
       } else if (_selectedChip == 'Railway') {
@@ -416,6 +417,21 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
               ),
             ),
 
+            // Secondary Andaman Sub-filter (Govt vs Private)
+            if (_selectedChip == 'Andaman')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Row(
+                  children: [
+                    _buildSubFilterChip('All A&N Jobs', 'All', isDark),
+                    const SizedBox(width: 8),
+                    _buildSubFilterChip('Government', 'Govt', isDark),
+                    const SizedBox(width: 8),
+                    _buildSubFilterChip('Private Jobs', 'Private', isDark),
+                  ],
+                ),
+              ),
+
             // Filter Active Indicators
             if (_selectedQualification != 'All' || _selectedStatus != 'All')
               Padding(
@@ -509,6 +525,40 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubFilterChip(String label, String value, bool isDark) {
+    final isSelected = _andamanSubFilter == value;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _andamanSubFilter = value);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (value == 'Private' ? const Color(0xFF6366F1) : AppColors.primary)
+              : (isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? AppColors.darkBorder : AppColors.border),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? AppColors.darkTextSecondary : AppColors.secondaryText),
+          ),
         ),
       ),
     );

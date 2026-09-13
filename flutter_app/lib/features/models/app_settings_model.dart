@@ -39,6 +39,48 @@ class AppSettingsModel {
   final String playStoreUrl;
   final String disclaimer;
 
+  // Announcement Banner (v1.1)
+  final bool announcementEnabled;
+  final String announcementType;
+  final String announcementText;
+  final String announcementUrl;
+  final String announcementStartAt;
+  final String announcementEndAt;
+  final int announcementPriority;
+
+  // Live Updates (v1.1)
+  final bool liveUpdatesEnabled;
+  final String liveUpdatesTitle;
+  final int liveUpdatesMaxItems;
+  final bool liveUpdatesAutoSlideEnabled;
+  final int liveUpdatesAutoSlideSeconds;
+
+  // Closing Soon (v1.1)
+  final bool closingSoonEnabled;
+  final String closingSoonTitle;
+  final int closingSoonDaysThreshold;
+  final int closingSoonMaxItems;
+
+  // Popular This Week (v1.1)
+  final bool popularEnabled;
+  final String popularTitle;
+  final int popularMaxItems;
+
+  // Latest Jobs (v1.1)
+  final bool latestJobsEnabled;
+  final String latestJobsTitle;
+  final int latestJobsMaxItems;
+
+  // Quick Categories (v1.1)
+  final bool quickCategoriesEnabled;
+  final String quickCategoriesTitle;
+
+  // Central Feature Flags (v1.1)
+  final bool proPageEnabled;
+  final bool supportPageEnabled;
+  final bool notificationPreferencesEnabled;
+  final bool socialSectionEnabled;
+
   const AppSettingsModel({
     this.appTitle = 'Notify Jobs',
     this.tagline = 'Government Jobs. Results. Admit Cards. One App.',
@@ -78,7 +120,66 @@ class AppSettingsModel {
         'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
     this.disclaimer =
         'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
+
+    // Announcement Banner Defaults
+    this.announcementEnabled = false,
+    this.announcementType = 'New',
+    this.announcementText = '',
+    this.announcementUrl = '',
+    this.announcementStartAt = '',
+    this.announcementEndAt = '',
+    this.announcementPriority = 1,
+
+    // Live Updates Defaults
+    this.liveUpdatesEnabled = true,
+    this.liveUpdatesTitle = 'Live Updates',
+    this.liveUpdatesMaxItems = 5,
+    this.liveUpdatesAutoSlideEnabled = true,
+    this.liveUpdatesAutoSlideSeconds = 4,
+
+    // Closing Soon Defaults
+    this.closingSoonEnabled = true,
+    this.closingSoonTitle = 'Closing Soon',
+    this.closingSoonDaysThreshold = 7,
+    this.closingSoonMaxItems = 5,
+
+    // Popular This Week Defaults
+    this.popularEnabled = true,
+    this.popularTitle = 'Popular This Week',
+    this.popularMaxItems = 5,
+
+    // Latest Jobs Defaults
+    this.latestJobsEnabled = true,
+    this.latestJobsTitle = 'Latest Jobs',
+    this.latestJobsMaxItems = 6,
+
+    // Quick Categories Defaults
+    this.quickCategoriesEnabled = true,
+    this.quickCategoriesTitle = 'Quick Categories',
+
+    // Central Feature Flags Defaults
+    this.proPageEnabled = false,
+    this.supportPageEnabled = true,
+    this.notificationPreferencesEnabled = true,
+    this.socialSectionEnabled = true,
   });
+
+  /// Check whether announcement banner is active and within schedule window
+  bool get isAnnouncementActive {
+    if (!announcementEnabled || announcementText.trim().isEmpty) {
+      return false;
+    }
+    final now = DateTime.now();
+    if (announcementStartAt.isNotEmpty) {
+      final start = DateTime.tryParse(announcementStartAt);
+      if (start != null && now.isBefore(start)) return false;
+    }
+    if (announcementEndAt.isNotEmpty) {
+      final end = DateTime.tryParse(announcementEndAt);
+      if (end != null && now.isAfter(end)) return false;
+    }
+    return true;
+  }
 
   factory AppSettingsModel.fromJson(Map<String, dynamic> json) =>
       AppSettingsModel.fromMap(json);
@@ -129,6 +230,74 @@ class AppSettingsModel {
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
       disclaimer: map['disclaimer']?.toString() ??
           'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
+
+      // Announcement Banner
+      announcementEnabled: map['announcementEnabled'] == true,
+      announcementType: map['announcementType']?.toString() ?? 'New',
+      announcementText: map['announcementText']?.toString() ?? '',
+      announcementUrl: map['announcementUrl']?.toString() ?? '',
+      announcementStartAt: map['announcementStartAt']?.toString() ?? '',
+      announcementEndAt: map['announcementEndAt']?.toString() ?? '',
+      announcementPriority:
+          int.tryParse(map['announcementPriority']?.toString() ?? '1') ?? 1,
+
+      // Live Updates
+      liveUpdatesEnabled: map['liveUpdatesEnabled'] != false,
+      liveUpdatesTitle: map['liveUpdatesTitle']?.toString() ?? 'Live Updates',
+      liveUpdatesMaxItems:
+          int.tryParse(map['liveUpdatesMaxItems']?.toString() ?? '5') ?? 5,
+      liveUpdatesAutoSlideEnabled: map['liveUpdatesAutoSlideEnabled'] != false,
+      liveUpdatesAutoSlideSeconds:
+          int.tryParse(map['liveUpdatesAutoSlideSeconds']?.toString() ?? '4') ?? 4,
+
+      // Closing Soon
+      closingSoonEnabled: map['closingSoonEnabled'] != false,
+      closingSoonTitle: map['closingSoonTitle']?.toString() ?? 'Closing Soon',
+      closingSoonDaysThreshold:
+          int.tryParse(map['closingSoonDaysThreshold']?.toString() ?? '7') ?? 7,
+      closingSoonMaxItems:
+          int.tryParse(map['closingSoonMaxItems']?.toString() ?? '5') ?? 5,
+
+      // Popular This Week
+      popularEnabled: map['popularEnabled'] != false,
+      popularTitle: map['popularTitle']?.toString() ?? 'Popular This Week',
+      popularMaxItems:
+          int.tryParse(map['popularMaxItems']?.toString() ?? '5') ?? 5,
+
+      // Latest Jobs
+      latestJobsEnabled: map['latestJobsEnabled'] != false,
+      latestJobsTitle: map['latestJobsTitle']?.toString() ?? 'Latest Jobs',
+      latestJobsMaxItems:
+          int.tryParse(map['latestJobsMaxItems']?.toString() ?? '6') ?? 6,
+
+      // Quick Categories
+      quickCategoriesEnabled: map['quickCategoriesEnabled'] != false,
+      quickCategoriesTitle:
+          map['quickCategoriesTitle']?.toString() ?? 'Quick Categories',
+
+      // Central Feature Flags
+      proPageEnabled: map['proPageEnabled'] == true,
+      supportPageEnabled: map['supportPageEnabled'] != false,
+      notificationPreferencesEnabled:
+          map['notificationPreferencesEnabled'] != false,
+      socialSectionEnabled: map['socialSectionEnabled'] != false,
     );
   }
+
+  String get announcementActionUrl => announcementUrl;
+  String get announcementActionText => announcementUrl.isNotEmpty ? 'View' : '';
+
+  String get liveUpdatesSubtitle => 'Urgent notifications & breaking alerts';
+  int get liveUpdatesMaxCount => liveUpdatesMaxItems;
+
+  String get closingSoonSubtitle => 'Apply before deadline passes';
+  int get closingSoonMaxCount => closingSoonMaxItems;
+
+  String get popularSubtitle => 'Top viewed vacancies by aspirants';
+  int get popularMaxCount => popularMaxItems;
+
+  String get latestJobsSubtitle => 'Recently announced notifications';
+  int get latestJobsMaxCount => latestJobsMaxItems;
+
+  String get quickCategoriesSubtitle => 'Explore by department & qualification';
 }

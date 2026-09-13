@@ -280,6 +280,22 @@ class ContentModel {
   final String salary;
   final String location;
   final String? jobType;
+  final bool showInLiveUpdates;
+
+  // Private / Andaman specific fields
+  final String? companyName;
+  final String? island;
+  final String? salaryRange;
+  final String? experience;
+  final List<String> skills;
+  final String? employmentType;
+  final String? workingHours;
+  final String? applicationMethod;
+  final String? contactEmail;
+  final String? contactPhone;
+  final String? whatsappApplyUrl;
+  final String? jobDescription;
+  final String? requirements;
 
   final String? applicationStartDate;
   final String? applicationLastDate;
@@ -326,6 +342,20 @@ class ContentModel {
     required this.salary,
     required this.location,
     this.jobType,
+    this.showInLiveUpdates = false,
+    this.companyName,
+    this.island,
+    this.salaryRange,
+    this.experience,
+    this.skills = const [],
+    this.employmentType,
+    this.workingHours,
+    this.applicationMethod,
+    this.contactEmail,
+    this.contactPhone,
+    this.whatsappApplyUrl,
+    this.jobDescription,
+    this.requirements,
     this.applicationStartDate,
     this.applicationLastDate,
     this.statusOverride,
@@ -520,6 +550,23 @@ class ContentModel {
       tags:
           (map['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
               [],
+      showInLiveUpdates: map['showInLiveUpdates'] == true,
+      companyName: map['companyName']?.toString(),
+      island: map['island']?.toString(),
+      salaryRange: map['salaryRange']?.toString(),
+      experience: map['experience']?.toString(),
+      skills: (map['skills'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      employmentType: map['employmentType']?.toString(),
+      workingHours: map['workingHours']?.toString(),
+      applicationMethod: map['applicationMethod']?.toString(),
+      contactEmail: map['contactEmail']?.toString(),
+      contactPhone: map['contactPhone']?.toString(),
+      whatsappApplyUrl: map['whatsappApplyUrl']?.toString(),
+      jobDescription: map['jobDescription']?.toString(),
+      requirements: map['requirements']?.toString(),
     );
   }
 
@@ -539,6 +586,20 @@ class ContentModel {
         'salary': salary,
         'location': location,
         'jobType': jobType,
+        'showInLiveUpdates': showInLiveUpdates,
+        if (companyName != null) 'companyName': companyName,
+        if (island != null) 'island': island,
+        if (salaryRange != null) 'salaryRange': salaryRange,
+        if (experience != null) 'experience': experience,
+        if (skills.isNotEmpty) 'skills': skills,
+        if (employmentType != null) 'employmentType': employmentType,
+        if (workingHours != null) 'workingHours': workingHours,
+        if (applicationMethod != null) 'applicationMethod': applicationMethod,
+        if (contactEmail != null) 'contactEmail': contactEmail,
+        if (contactPhone != null) 'contactPhone': contactPhone,
+        if (whatsappApplyUrl != null) 'whatsappApplyUrl': whatsappApplyUrl,
+        if (jobDescription != null) 'jobDescription': jobDescription,
+        if (requirements != null) 'requirements': requirements,
         'applicationStartDate': applicationStartDate,
         'applicationLastDate': applicationLastDate,
         'statusOverride': statusOverride,
@@ -566,7 +627,13 @@ class ContentModel {
       };
 
   String get categoryDisplay {
-    if (categoryIds.contains('andaman-nicobar')) return 'A&N Jobs';
+    if (contentType == 'andaman_job' ||
+        contentType == 'andaman' ||
+        categoryIds.contains('andaman-nicobar')) {
+      return (jobType?.toLowerCase() == 'private')
+          ? 'A&N JOB • PRIVATE'
+          : 'A&N JOB • GOVT';
+    }
     if (categoryIds.contains('ssc')) return 'SSC';
     if (categoryIds.contains('railway')) return 'Railway';
     if (categoryIds.contains('banking')) return 'Banking';
@@ -574,6 +641,8 @@ class ContentModel {
     switch (contentType) {
       case 'government_job':
         return 'Govt Job';
+      case 'private_job':
+        return 'Private Job';
       case 'admit_card':
         return 'Admit Card';
       case 'result':
@@ -588,6 +657,17 @@ class ContentModel {
         return 'Job Alert';
     }
   }
+
+  bool get isAndamanJob =>
+      contentType == 'andaman_job' ||
+      contentType == 'andaman' ||
+      categoryIds.contains('andaman-nicobar');
+
+  bool get isPrivateJob =>
+      contentType == 'private_job' ||
+      (jobType?.toLowerCase() == 'private');
+
+  bool get isGovernmentJob => !isPrivateJob;
 
   String get displayLastDate {
     if (applicationLastDate == null || applicationLastDate!.isEmpty) {
@@ -607,6 +687,22 @@ class ContentModel {
     }
     try {
       final date = DateTime.parse(publishedAt!);
+      return DateFormat('dd MMM yyyy').format(date);
+    } catch (_) {
+      return 'Recently';
+    }
+  }
+
+  String get relativePublishedDate {
+    if (publishedAt == null || publishedAt!.isEmpty) return 'Recently';
+    try {
+      final date = DateTime.parse(publishedAt!);
+      final diff = DateTime.now().difference(date);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
       return DateFormat('dd MMM yyyy').format(date);
     } catch (_) {
       return 'Recently';

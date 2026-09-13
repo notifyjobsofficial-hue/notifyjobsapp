@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/content_model.dart';
+import 'app_settings_provider.dart';
 
 /// Real-time Firestore Content Stream Provider
 final firestoreContentStreamProvider =
@@ -37,26 +38,83 @@ final allContentProvider = Provider<List<ContentModel>>((ref) {
   );
 });
 
-/// Latest Government Jobs Provider
+/// Latest Jobs Provider (Controlled by Admin settings)
 final latestJobsProvider = Provider<List<ContentModel>>((ref) {
   final all = ref.watch(allContentProvider);
-  return all.where((item) => item.contentType == 'government_job').toList();
+  final settings = ref.watch(appSettingsProvider);
+  if (!settings.latestJobsEnabled) return const <ContentModel>[];
+
+  final jobs = all
+      .where((item) =>
+          item.contentType == 'government_job' ||
+          item.contentType == 'private_job' ||
+          item.contentType == 'andaman_job')
+      .toList();
+  return jobs.take(settings.latestJobsMaxItems).toList();
 });
 
-/// Popular This Week (Specification 86)
+/// Popular This Week Provider (Controlled by Admin settings, real view metric)
 final popularThisWeekProvider = Provider<List<ContentModel>>((ref) {
   final all = ref.watch(allContentProvider);
+  final settings = ref.watch(appSettingsProvider);
+  if (!settings.popularEnabled) return const <ContentModel>[];
+
   final copy = [...all];
   copy.sort((a, b) => b.views.compareTo(a.views));
-  return copy.take(5).toList();
+  return copy.take(settings.popularMaxItems).toList();
 });
 
-/// Andaman & Nicobar Jobs Provider (Specification 52)
+/// Live Updates Provider (Controlled by Admin settings & showInLiveUpdates toggle)
+final liveUpdatesProvider = Provider<List<ContentModel>>((ref) {
+  final all = ref.watch(allContentProvider);
+  final settings = ref.watch(appSettingsProvider);
+  if (!settings.liveUpdatesEnabled) return const <ContentModel>[];
+
+  final marked = all.where((item) => item.showInLiveUpdates).toList();
+  if (marked.isNotEmpty) {
+    return marked.take(settings.liveUpdatesMaxItems).toList();
+  }
+  // Deterministic safe fallback: most recent published items
+  final copy = [...all];
+  copy.sort((a, b) => (b.publishedAt ?? '').compareTo(a.publishedAt ?? ''));
+  return copy.take(settings.liveUpdatesMaxItems).toList();
+});
+
+/// Closing Soon Provider (Dynamically computed from real deadlines)
+final closingSoonProvider = Provider<List<ContentModel>>((ref) {
+  final all = ref.watch(allContentProvider);
+  final settings = ref.watch(appSettingsProvider);
+  if (!settings.closingSoonEnabled) return const <ContentModel>[];
+
+  final now = DateTime.now();
+  final thresholdDays = settings.closingSoonDaysThreshold;
+  final maxDate = now.add(Duration(days: thresholdDays));
+
+  final closingItems = all.where((item) {
+    if (item.applicationLastDate == null || item.applicationLastDate!.isEmpty) {
+      return false;
+    }
+    final lastDate = DateTime.tryParse(item.applicationLastDate!);
+    if (lastDate == null) return false;
+    return (lastDate.isAfter(now) || lastDate.day == now.day) &&
+        lastDate.isBefore(maxDate);
+  }).toList();
+
+  closingItems.sort((a, b) {
+    final da = DateTime.tryParse(a.applicationLastDate!) ?? now;
+    final db = DateTime.tryParse(b.applicationLastDate!) ?? now;
+    return da.compareTo(db);
+  });
+
+  return closingItems.take(settings.closingSoonMaxItems).toList();
+});
+
+/// Andaman & Nicobar Jobs Provider (Unified A&N model)
 final andamanJobsProvider = Provider<List<ContentModel>>((ref) {
   final all = ref.watch(allContentProvider);
   return all
       .where((item) =>
-          item.categoryIds.contains('andaman-nicobar') ||
+          item.isAndamanJob ||
           item.location.toLowerCase().contains('andaman') ||
           item.location.toLowerCase().contains('port blair'))
       .toList();

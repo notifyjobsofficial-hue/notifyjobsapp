@@ -15,6 +15,7 @@ import {
 import { ContentItem, ContentType, ContentStatus } from '../types';
 import { AdminButton } from '../components/common/AdminButton';
 import { AdminBadge } from '../components/common/AdminBadge';
+import { AdminConfirmDialog } from '../components/common/AdminConfirmDialog';
 import { calculateJobStatus } from '../services/contentService';
 
 interface ContentListPageProps {
@@ -39,6 +40,8 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<ContentType | 'all'>(currentTypeFilter);
   const [statusFilter, setStatusFilter] = useState<ContentStatus | 'all'>('all');
+  const [itemToDelete, setItemToDelete] = useState<ContentItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -83,6 +86,7 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
             <option value="all">All Content Types</option>
             <option value="government_job">Government Jobs</option>
             <option value="private_job">Private Jobs</option>
+            <option value="andaman_job">Andaman &amp; Nicobar Jobs</option>
             <option value="admit_card">Admit Cards</option>
             <option value="result">Results</option>
             <option value="answer_key">Answer Keys</option>
@@ -167,9 +171,21 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
 
                       {/* Content Type */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <AdminBadge variant="slate" size="sm">
-                          {item.contentType.replace('_', ' ')}
-                        </AdminBadge>
+                        {item.contentType === 'andaman_job' ? (
+                          <span
+                            className={`text-[11px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                              item.jobType === 'private'
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-emerald-50 text-[#159B76] border border-emerald-200'
+                            }`}
+                          >
+                            {item.jobType === 'private' ? 'A&N • PRIVATE' : 'A&N • GOVT'}
+                          </span>
+                        ) : (
+                          <AdminBadge variant="slate" size="sm">
+                            {item.contentType.replace('_', ' ')}
+                          </AdminBadge>
+                        )}
                       </td>
 
                       {/* Role */}
@@ -246,7 +262,7 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                             <Archive className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => onDeleteItem(item.id)}
+                            onClick={() => setItemToDelete(item)}
                             className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                             title="Delete Permanently"
                           >
@@ -281,9 +297,21 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                 className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <AdminBadge variant="slate" size="sm">
-                    {item.contentType.replace('_', ' ')}
-                  </AdminBadge>
+                  {item.contentType === 'andaman_job' ? (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                        item.jobType === 'private'
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          : 'bg-emerald-50 text-[#159B76] border border-emerald-200'
+                      }`}
+                    >
+                      {item.jobType === 'private' ? 'A&N • PRIVATE' : 'A&N • GOVT'}
+                    </span>
+                  ) : (
+                    <AdminBadge variant="slate" size="sm">
+                      {item.contentType.replace('_', ' ')}
+                    </AdminBadge>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <AdminBadge
                       variant={item.status === 'published' ? 'success' : 'warning'}
@@ -350,6 +378,13 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                     >
                       Edit
                     </AdminButton>
+                    <button
+                      onClick={() => setItemToDelete(item)}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -357,6 +392,28 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
           })
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AdminConfirmDialog
+        isOpen={Boolean(itemToDelete)}
+        title="Delete Content Item"
+        message={`Are you sure you want to permanently delete "${itemToDelete?.title || 'this item'}"? This action cannot be undone.`}
+        confirmLabel="Delete Permanently"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleting}
+        onCancel={() => setItemToDelete(null)}
+        onConfirm={async () => {
+          if (!itemToDelete) return;
+          setDeleting(true);
+          try {
+            await onDeleteItem(itemToDelete.id);
+            setItemToDelete(null);
+          } finally {
+            setDeleting(false);
+          }
+        }}
+      />
     </div>
   );
 };

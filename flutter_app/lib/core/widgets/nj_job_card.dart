@@ -38,13 +38,24 @@ class NjJobCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              NjBadge(
-                label: job.categoryDisplay,
-                variant: NjBadgeVariant.primary,
+              Flexible(
+                child: NjBadge(
+                  label: job.categoryDisplay,
+                  variant: job.isAndamanJob
+                      ? (job.isPrivateJob
+                          ? NjBadgeVariant.purple
+                          : NjBadgeVariant.primary)
+                      : (job.isPrivateJob
+                          ? NjBadgeVariant.purple
+                          : NjBadgeVariant.primary),
+                ),
               ),
-              NjStatusBadge(
-                applicationLastDate: job.applicationLastDate,
-                statusOverride: job.statusOverride,
+              const SizedBox(width: 8),
+              Flexible(
+                child: NjStatusBadge(
+                  applicationLastDate: job.applicationLastDate,
+                  statusOverride: job.statusOverride,
+                ),
               ),
             ],
           ),
@@ -61,11 +72,13 @@ class NjJobCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // Organization / Department
+          // Organization / Department / Employer
           Row(
             children: [
               Icon(
-                Icons.account_balance_outlined,
+                job.isPrivateJob
+                    ? Icons.business_rounded
+                    : Icons.account_balance_outlined,
                 size: 14,
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -74,7 +87,9 @@ class NjJobCard extends StatelessWidget {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  job.organization,
+                  job.isPrivateJob
+                      ? (job.companyName ?? job.organization)
+                      : job.organization,
                   style: AppTypography.subtitle.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -88,7 +103,7 @@ class NjJobCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Compact Metadata Grid (Vacancies, Qualification, Last Date)
+          // Compact Metadata Grid (Vacancies, Qualification, Last Date / Private specifics)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -100,53 +115,103 @@ class NjJobCard extends StatelessWidget {
                 color: isDark ? AppColors.darkBorder : AppColors.borderSubtle,
               ),
             ),
-            child: Row(
-              children: [
-                // Vacancies
-                Expanded(
-                  child: _buildMetaItem(
-                    label: 'Vacancies',
-                    value: job.vacancies.isNotEmpty ? job.vacancies : '—',
-                    isDark: isDark,
+            child: job.isPrivateJob
+                ? Row(
+                    children: [
+                      // Salary
+                      Expanded(
+                        child: _buildMetaItem(
+                          label: 'Salary / Pay',
+                          value: (job.salaryRange?.isNotEmpty ?? false)
+                              ? job.salaryRange!
+                              : (job.salary.isNotEmpty ? job.salary : 'Best in Industry'),
+                          isDark: isDark,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
+                      ),
+                      // Island / Location
+                      Expanded(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: _buildMetaItem(
+                            label: 'Island / Area',
+                            value: (job.island?.isNotEmpty ?? false)
+                                ? job.island!
+                                : (job.location.isNotEmpty ? job.location : 'Andaman'),
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
+                      ),
+                      // Type
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _buildMetaItem(
+                            label: 'Employment',
+                            value: job.employmentType ?? 'Full Time',
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      // Vacancies
+                      Expanded(
+                        child: _buildMetaItem(
+                          label: 'Vacancies',
+                          value: job.vacancies.isNotEmpty ? job.vacancies : '—',
+                          isDark: isDark,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
+                      ),
+                      // Qualification
+                      Expanded(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: _buildMetaItem(
+                            label: 'Qualification',
+                            value: job.qualification.isNotEmpty
+                                ? job.qualification
+                                : '—',
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 24,
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
+                      ),
+                      // Last Date
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _buildMetaItem(
+                            label: 'Last Date',
+                            value: job.displayLastDate,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: isDark ? AppColors.darkBorder : AppColors.border,
-                ),
-                // Qualification
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: _buildMetaItem(
-                      label: 'Qualification',
-                      value: job.qualification.isNotEmpty
-                          ? job.qualification
-                          : '—',
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: isDark ? AppColors.darkBorder : AppColors.border,
-                ),
-                // Last Date
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: _buildMetaItem(
-                      label: 'Last Date',
-                      value: job.displayLastDate,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 14),
 

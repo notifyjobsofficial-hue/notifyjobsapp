@@ -1,6 +1,7 @@
 export type ContentType =
   | 'government_job'
   | 'private_job'
+  | 'andaman_job'
   | 'admit_card'
   | 'result'
   | 'answer_key'
@@ -8,6 +9,8 @@ export type ContentType =
   | 'admission'
   | 'scheme'
   | 'article';
+
+export type JobType = 'government' | 'private';
 
 export type ContentStatus = 'draft' | 'published' | 'archived';
 
@@ -87,7 +90,23 @@ export interface ContentItem {
   qualification: string;
   salary: string;
   location: string;
-  jobType?: string; // Full Time, Contractual, Apprenticeship
+  jobType?: 'government' | 'private' | string;
+  showInLiveUpdates?: boolean;
+
+  // Private / Andaman specific fields
+  companyName?: string;
+  island?: string;
+  salaryRange?: string;
+  experience?: string;
+  skills?: string[];
+  employmentType?: string;
+  workingHours?: string;
+  applicationMethod?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  whatsappApplyUrl?: string;
+  jobDescription?: string;
+  requirements?: string;
 
   // Application dates
   applicationStartDate?: string;
@@ -194,6 +213,48 @@ export interface AppSettings {
   shareBaseUrl: string;
   playStoreUrl: string;
   disclaimer: string;
+
+  // Announcement Banner (v1.1)
+  announcementEnabled: boolean;
+  announcementType: 'General' | 'Important' | 'Urgent' | 'New';
+  announcementText: string;
+  announcementUrl: string;
+  announcementStartAt: string;
+  announcementEndAt: string;
+  announcementPriority: number;
+
+  // Live Updates (v1.1)
+  liveUpdatesEnabled: boolean;
+  liveUpdatesTitle: string;
+  liveUpdatesMaxItems: number;
+  liveUpdatesAutoSlideEnabled: boolean;
+  liveUpdatesAutoSlideSeconds: number;
+
+  // Closing Soon (v1.1)
+  closingSoonEnabled: boolean;
+  closingSoonTitle: string;
+  closingSoonDaysThreshold: number;
+  closingSoonMaxItems: number;
+
+  // Popular This Week (v1.1)
+  popularEnabled: boolean;
+  popularTitle: string;
+  popularMaxItems: number;
+
+  // Latest Jobs (v1.1)
+  latestJobsEnabled: boolean;
+  latestJobsTitle: string;
+  latestJobsMaxItems: number;
+
+  // Quick Categories (v1.1)
+  quickCategoriesEnabled: boolean;
+  quickCategoriesTitle: string;
+
+  // Central Feature Flags (v1.1)
+  proPageEnabled: boolean;
+  supportPageEnabled: boolean;
+  notificationPreferencesEnabled: boolean;
+  socialSectionEnabled: boolean;
 }
 
 export interface AdminUser {

@@ -105,78 +105,79 @@ class MoreScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // 2. Section: Social Channels (| Join Us) (Specification 32)
-              _buildSectionHeader('| Join Us', isDark),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  // WhatsApp
-                  if (settings.whatsappEnabled &&
-                      settings.whatsappUrl.isNotEmpty)
-                    Expanded(
-                      child: _buildSocialTile(
-                        label: 'WhatsApp',
-                        icon: Icons.chat_bubble_rounded,
-                        iconColor: const Color(0xFF16A34A),
-                        bgColor: const Color(0xFFDCFCE7),
-                        onTap: () => _launchExternalUrl(settings.whatsappUrl),
-                        isDark: isDark,
-                      ),
-                    ),
-                  if (settings.whatsappEnabled &&
-                      settings.telegramEnabled &&
-                      settings.telegramUrl.isNotEmpty)
-                    const SizedBox(width: 12),
-                  // Telegram
-                  if (settings.telegramEnabled &&
-                      settings.telegramUrl.isNotEmpty)
-                    Expanded(
-                      child: _buildSocialTile(
-                        label: 'Telegram',
-                        icon: Icons.send_rounded,
-                        iconColor: const Color(0xFF0284C7),
-                        bgColor: const Color(0xFFE0F2FE),
-                        onTap: () => _launchExternalUrl(settings.telegramUrl),
-                        isDark: isDark,
-                      ),
-                    ),
-                ],
-              ),
-              if (settings.youtubeEnabled &&
-                  settings.youtubeUrl.isNotEmpty) ...[
-                const SizedBox(height: 10),
+              // 2. Section: Social Channels (| Join Us) (Admin Feature Flag)
+              if (settings.socialSectionEnabled) ...[
+                _buildSectionHeader('| Join Us', isDark),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildSocialTile(
-                        label: 'YouTube',
-                        icon: Icons.play_arrow_rounded,
-                        iconColor: const Color(0xFFDC2626),
-                        bgColor: const Color(0xFFFEE2E2),
-                        onTap: () => _launchExternalUrl(settings.youtubeUrl),
-                        isDark: isDark,
-                      ),
-                    ),
-                    if (settings.instagramEnabled &&
-                        settings.instagramUrl.isNotEmpty) ...[
-                      const SizedBox(width: 12),
+                    // WhatsApp
+                    if (settings.whatsappEnabled &&
+                        settings.whatsappUrl.isNotEmpty)
                       Expanded(
                         child: _buildSocialTile(
-                          label: 'Instagram',
-                          icon: Icons.camera_alt_rounded,
-                          iconColor: const Color(0xFFDB2777),
-                          bgColor: const Color(0xFFFCE7F3),
-                          onTap: () =>
-                              _launchExternalUrl(settings.instagramUrl),
+                          label: 'WhatsApp',
+                          icon: Icons.chat_bubble_rounded,
+                          iconColor: const Color(0xFF16A34A),
+                          bgColor: const Color(0xFFDCFCE7),
+                          onTap: () => _launchExternalUrl(settings.whatsappUrl),
                           isDark: isDark,
                         ),
                       ),
-                    ],
+                    if (settings.whatsappEnabled &&
+                        settings.telegramEnabled &&
+                        settings.telegramUrl.isNotEmpty)
+                      const SizedBox(width: 12),
+                    // Telegram
+                    if (settings.telegramEnabled &&
+                        settings.telegramUrl.isNotEmpty)
+                      Expanded(
+                        child: _buildSocialTile(
+                          label: 'Telegram',
+                          icon: Icons.send_rounded,
+                          iconColor: const Color(0xFF0284C7),
+                          bgColor: const Color(0xFFE0F2FE),
+                          onTap: () => _launchExternalUrl(settings.telegramUrl),
+                          isDark: isDark,
+                        ),
+                      ),
                   ],
                 ),
+                if (settings.youtubeEnabled &&
+                    settings.youtubeUrl.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSocialTile(
+                          label: 'YouTube',
+                          icon: Icons.play_arrow_rounded,
+                          iconColor: const Color(0xFFDC2626),
+                          bgColor: const Color(0xFFFEE2E2),
+                          onTap: () => _launchExternalUrl(settings.youtubeUrl),
+                          isDark: isDark,
+                        ),
+                      ),
+                      if (settings.instagramEnabled &&
+                          settings.instagramUrl.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildSocialTile(
+                            label: 'Instagram',
+                            icon: Icons.camera_alt_rounded,
+                            iconColor: const Color(0xFFDB2777),
+                            bgColor: const Color(0xFFFCE7F3),
+                            onTap: () =>
+                                _launchExternalUrl(settings.instagramUrl),
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 24),
               ],
-
-              const SizedBox(height: 24),
 
               // 3. Section: Preferences & Support (| Help & Support)
               _buildSectionHeader('| Preferences & Support', isDark),
@@ -185,22 +186,26 @@ class MoreScreen extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _buildListTile(
-                      icon: Icons.notifications_active_outlined,
-                      title: 'Notification Preferences',
-                      subtitle: 'Choose recruitment alert topics',
-                      onTap: () => context.push('/notifications'),
-                      isDark: isDark,
-                    ),
-                    const Divider(height: 1),
-                    _buildListTile(
-                      icon: Icons.headset_mic_outlined,
-                      title: 'Help & Support',
-                      subtitle: 'Email, WhatsApp & report wrong info',
-                      onTap: () => context.push('/support'),
-                      isDark: isDark,
-                    ),
-                    const Divider(height: 1),
+                    if (settings.notificationPreferencesEnabled) ...[
+                      _buildListTile(
+                        icon: Icons.notifications_active_outlined,
+                        title: 'Notification Preferences',
+                        subtitle: 'Choose recruitment alert topics',
+                        onTap: () => context.push('/notifications'),
+                        isDark: isDark,
+                      ),
+                      const Divider(height: 1),
+                    ],
+                    if (settings.supportPageEnabled) ...[
+                      _buildListTile(
+                        icon: Icons.headset_mic_outlined,
+                        title: 'Help & Support',
+                        subtitle: 'Email, WhatsApp & report wrong info',
+                        onTap: () => context.push('/support'),
+                        isDark: isDark,
+                      ),
+                      const Divider(height: 1),
+                    ],
                     _buildListTile(
                       icon: Icons.share_outlined,
                       title: 'Share Notify Jobs App',

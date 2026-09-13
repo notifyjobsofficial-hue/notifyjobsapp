@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/nj_job_card.dart';
@@ -20,15 +21,18 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appSettings = ref.watch(appSettingsProvider);
     final categories = ref.watch(categoriesProvider);
+    final liveUpdates = ref.watch(liveUpdatesProvider);
+    final closingSoonJobs = ref.watch(closingSoonProvider);
     final popularJobs = ref.watch(popularThisWeekProvider);
+    final latestJobs = ref.watch(latestJobsProvider);
     final andamanJobs = ref.watch(andamanJobsProvider);
     final results = ref.watch(resultsProvider);
     final admitCards = ref.watch(admitCardsProvider);
     final articles = ref.watch(articlesProvider);
     final savedJobsNotifier = ref.read(savedJobsProvider.notifier);
     final savedJobs = ref.watch(savedJobsProvider);
-    final appSettings = ref.watch(appSettingsProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -195,149 +199,186 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
 
-              // 3. Latest Alert Banner
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.primary.withOpacity(0.15)
-                          : AppColors.softGreen,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.25),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'NEW',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
+              // 3. Announcement Banner (Admin Controlled)
+              if (appSettings.isAnnouncementActive)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (appSettings.announcementActionUrl.isNotEmpty) {
+                          final uri = Uri.tryParse(appSettings.announcementActionUrl);
+                          if (uri != null) {
+                            launchUrl(uri, mode: LaunchMode.externalApplication);
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.primary.withOpacity(0.15)
+                              : AppColors.softGreen,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.25),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'SSC CGL & A&N Police 2026 recruitments open now!',
-                            style: AppTypography.caption.copyWith(
-                              color:
-                                  isDark ? Colors.white : AppColors.primaryDark,
-                              fontWeight: FontWeight.w600,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'ALERT',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                appSettings.announcementText,
+                                style: AppTypography.caption.copyWith(
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.primaryDark,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (appSettings.announcementActionText.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Text(
+                                appSettings.announcementActionText,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 4. Live Updates Feed (Admin Controlled)
+              if (appSettings.liveUpdatesEnabled && liveUpdates.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NjSectionHeader(
+                          title: appSettings.liveUpdatesTitle,
+                          subtitle: appSettings.liveUpdatesSubtitle,
+                          onViewAll: () => context.push('/updates'),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 90,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: liveUpdates.take(appSettings.liveUpdatesMaxCount).length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final item = liveUpdates[index];
+                              return GestureDetector(
+                                onTap: () => context.push(
+                                  item.contentType == 'article'
+                                      ? '/article/${item.id}'
+                                      : '/job/${item.id}',
+                                ),
+                                child: Container(
+                                  width: 240,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppColors.darkSurface : Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isDark ? AppColors.darkBorder : AppColors.border,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.02),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.error,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            item.relativePublishedDate,
+                                            style: AppTypography.caption.copyWith(
+                                              fontSize: 10,
+                                              color: AppColors.muted,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            item.categoryDisplay,
+                                            style: AppTypography.caption.copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                        item.title,
+                                        style: AppTypography.cardTitle.copyWith(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+              ],
 
-              // 4. Quick Categories (2 Columns, Compact Tiles) (Specification 22)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      NjSectionHeader(
-                        title: 'Quick Categories',
-                        subtitle: 'Explore by department & qualification',
-                        onViewAll: () => context.push('/jobs'),
-                      ),
-                      const SizedBox(height: 12),
-                      GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: categories.take(8).length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          mainAxisExtent: 58,
-                        ),
-                        itemBuilder: (context, index) {
-                          final cat = categories[index];
-                          return GestureDetector(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              context.push('/jobs?category=${cat.slug}');
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurface
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkBorder
-                                      : AppColors.border,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 34,
-                                    height: 34,
-                                    decoration: BoxDecoration(
-                                      color: cat.color.withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Icon(
-                                      cat.iconData,
-                                      size: 18,
-                                      color: cat.color,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      cat.name,
-                                      style: AppTypography.cardTitle.copyWith(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? AppColors.darkTextPrimary
-                                            : AppColors.navy,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // 5. Popular This Week (Specification 86)
-              if (popularJobs.isNotEmpty) ...[
+              // 5. Quick Categories (Admin Controlled)
+              if (appSettings.quickCategoriesEnabled) ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -345,12 +386,207 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         NjSectionHeader(
-                          title: 'Popular This Week',
-                          subtitle: 'Top viewed vacancies by aspirants',
+                          title: appSettings.quickCategoriesTitle,
+                          subtitle: appSettings.quickCategoriesSubtitle,
                           onViewAll: () => context.push('/jobs'),
                         ),
                         const SizedBox(height: 12),
-                        ...popularJobs.take(2).map((job) {
+                        GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: categories.take(8).length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            mainAxisExtent: 58,
+                          ),
+                          itemBuilder: (context, index) {
+                            final cat = categories[index];
+                            return GestureDetector(
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                context.push('/jobs?category=${cat.slug}');
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.darkSurface
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.darkBorder
+                                        : AppColors.border,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: cat.color.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        cat.iconData,
+                                        size: 18,
+                                        color: cat.color,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        cat.name,
+                                        style: AppTypography.cardTitle.copyWith(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? AppColors.darkTextPrimary
+                                              : AppColors.navy,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+
+              // 6. Closing Soon (Admin Controlled)
+              if (appSettings.closingSoonEnabled && closingSoonJobs.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NjSectionHeader(
+                          title: appSettings.closingSoonTitle,
+                          subtitle: appSettings.closingSoonSubtitle,
+                          onViewAll: () => context.push('/jobs'),
+                        ),
+                        const SizedBox(height: 12),
+                        ...closingSoonJobs.take(appSettings.closingSoonMaxCount).map((job) {
+                          final isSaved =
+                              savedJobs.any((item) => item.id == job.id);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: NjJobCard(
+                              job: job,
+                              isSaved: isSaved,
+                              onTap: () => context.push('/job/${job.id}'),
+                              onToggleSave: () async {
+                                final saved =
+                                    await savedJobsNotifier.toggleSave(job);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(saved
+                                          ? 'Saved'
+                                          : 'Removed from Saved Jobs'),
+                                      duration: const Duration(seconds: 2),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                              onShare: () => NjShareSheet.show(
+                                context,
+                                content: job,
+                                shareBaseUrl: appSettings.shareBaseUrl,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              ],
+
+              // 7. Popular This Week (Admin Controlled)
+              if (appSettings.popularEnabled && popularJobs.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NjSectionHeader(
+                          title: appSettings.popularTitle,
+                          subtitle: appSettings.popularSubtitle,
+                          onViewAll: () => context.push('/jobs'),
+                        ),
+                        const SizedBox(height: 12),
+                        ...popularJobs.take(appSettings.popularMaxCount).map((job) {
+                          final isSaved =
+                              savedJobs.any((item) => item.id == job.id);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: NjJobCard(
+                              job: job,
+                              isSaved: isSaved,
+                              onTap: () => context.push('/job/${job.id}'),
+                              onToggleSave: () async {
+                                final saved =
+                                    await savedJobsNotifier.toggleSave(job);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(saved
+                                          ? 'Saved'
+                                          : 'Removed from Saved Jobs'),
+                                      duration: const Duration(seconds: 2),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              },
+                              onShare: () => NjShareSheet.show(
+                                context,
+                                content: job,
+                                shareBaseUrl: appSettings.shareBaseUrl,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              ],
+
+              // 8. Latest Jobs (Admin Controlled)
+              if (appSettings.latestJobsEnabled && latestJobs.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        NjSectionHeader(
+                          title: appSettings.latestJobsTitle,
+                          subtitle: appSettings.latestJobsSubtitle,
+                          onViewAll: () => context.push('/jobs'),
+                        ),
+                        const SizedBox(height: 12),
+                        ...latestJobs.take(appSettings.latestJobsMaxCount).map((job) {
                           final isSaved =
                               savedJobs.any((item) => item.id == job.id);
                           return Padding(

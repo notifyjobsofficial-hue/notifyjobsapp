@@ -121,28 +121,57 @@ class JobDetailScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      NjBadge(
-                        label: job.categoryDisplay,
-                        variant: NjBadgeVariant.primary,
+                      Flexible(
+                        child: NjBadge(
+                          label: job.categoryDisplay,
+                          variant: job.isAndamanJob
+                              ? (job.isPrivateJob
+                                  ? NjBadgeVariant.purple
+                                  : NjBadgeVariant.primary)
+                              : (job.isPrivateJob
+                                  ? NjBadgeVariant.purple
+                                  : NjBadgeVariant.primary),
+                        ),
                       ),
-                      const Spacer(),
-                      NjStatusBadge(lastDate: job.lastDateParsed),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: NjStatusBadge(
+                          applicationLastDate: job.applicationLastDate,
+                          statusOverride: job.statusOverride,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(job.title, style: AppTypography.headingSmall),
                   const SizedBox(height: 6),
                   Text(
-                    job.organization,
+                    job.isPrivateJob
+                        ? (job.companyName ?? job.organization)
+                        : job.organization,
                     style: AppTypography.titleSmall
                         .copyWith(color: AppColors.textSecondary),
                   ),
-                  if (job.department != null && job.department!.isNotEmpty) ...[
+                  if (!job.isPrivateJob && job.department != null && job.department!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       job.department!,
                       style: AppTypography.captionMedium
                           .copyWith(color: AppColors.textDisabled),
+                    ),
+                  ],
+                  if (job.isPrivateJob && job.island != null && job.island!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${job.island!} • ${job.location}',
+                          style: AppTypography.captionMedium
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
                     ),
                   ],
                   if (job.advtNo != null && job.advtNo!.isNotEmpty) ...[
@@ -168,7 +197,9 @@ class JobDetailScreen extends ConsumerWidget {
                           size: 16, color: AppColors.primary),
                       const SizedBox(width: 6),
                       Text(
-                        'Verified Official Notification',
+                        job.isPrivateJob
+                            ? 'Verified Employer Listing'
+                            : 'Verified Official Notification',
                         style: AppTypography.captionMedium
                             .copyWith(color: AppColors.primary),
                       ),
@@ -179,76 +210,250 @@ class JobDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // 2. Overview 2x2 Grid
-            Row(
-              children: [
-                Expanded(
-                  child: NjInfoTile(
-                    icon: Icons.people_outline_rounded,
-                    title: 'Total Vacancies',
-                    value: job.vacancies.isNotEmpty
-                        ? job.vacancies
-                        : 'Not Specified',
+            // 2. Overview / Specifications (Conditional: Private vs Government)
+            if (job.isPrivateJob) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.currency_rupee_rounded,
+                      title: 'Salary / Compensation',
+                      value: (job.salaryRange?.isNotEmpty ?? false)
+                          ? job.salaryRange!
+                          : (job.salary.isNotEmpty ? job.salary : 'Best in Industry'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: NjInfoTile(
-                    icon: Icons.currency_rupee_rounded,
-                    title: 'Salary / Pay',
-                    value: job.salary.isNotEmpty ? job.salary : 'As per rules',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.place_outlined,
+                      title: 'Island / Location',
+                      value: (job.island?.isNotEmpty ?? false)
+                          ? job.island!
+                          : (job.location.isNotEmpty ? job.location : 'Port Blair'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: NjInfoTile(
-                    icon: Icons.calendar_today_outlined,
-                    title: 'Last Date',
-                    value: job.displayLastDate,
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.work_outline_rounded,
+                      title: 'Experience',
+                      value: (job.experience?.isNotEmpty ?? false)
+                          ? job.experience!
+                          : 'Fresher / Experienced',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: NjInfoTile(
-                    icon: Icons.location_on_outlined,
-                    title: 'Job Location',
-                    value: job.location.isNotEmpty ? job.location : 'All India',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.access_time_rounded,
+                      title: 'Employment Type',
+                      value: job.employmentType ?? 'Full Time',
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                ],
+              ),
+              const SizedBox(height: 20),
 
-            // 3. Important Dates
-            if (job.importantDates.isNotEmpty ||
-                job.applicationStartDate != null) ...[
+              // Direct Employer Contact Card
               const NjSectionHeader(
-                  title: 'Important Dates', icon: Icons.event_note_rounded),
+                title: 'Direct Employer Contact',
+                icon: Icons.contact_phone_rounded,
+              ),
               NjCard(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (job.applicationStartDate != null &&
-                        job.applicationStartDate!.isNotEmpty)
-                      _buildDateRow(
-                          'Application Starts', job.applicationStartDate!),
-                    if (job.applicationLastDate != null &&
-                        job.applicationLastDate!.isNotEmpty)
-                      _buildDateRow('Last Date to Apply', job.displayLastDate,
-                          isHighlight: true),
-                    ...job.importantDates.map((d) {
-                      return _buildDateRow(
-                        d.label,
-                        d.isTentative ? '${d.date} (Tentative)' : d.date,
-                      );
-                    }),
+                    if (job.contactPhone != null && job.contactPhone!.isNotEmpty) ...[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.phone_rounded, color: Color(0xFF0284C7)),
+                        ),
+                        title: Text(job.contactPhone!, style: AppTypography.titleSmall),
+                        subtitle: const Text('Call Employer directly', style: AppTypography.captionMedium),
+                        trailing: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0284C7),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.call, size: 16),
+                          label: const Text('Call'),
+                          onPressed: () => _launchExternalUrl(context, 'tel:${job.contactPhone}'),
+                        ),
+                      ),
+                      const Divider(height: 16),
+                    ],
+                    if (job.whatsappApplyUrl != null && job.whatsappApplyUrl!.isNotEmpty) ...[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF16A34A)),
+                        ),
+                        title: const Text('WhatsApp Chat', style: AppTypography.titleSmall),
+                        subtitle: const Text('Message recruiter or send resume', style: AppTypography.captionMedium),
+                        trailing: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.send_rounded, size: 16),
+                          label: const Text('WhatsApp'),
+                          onPressed: () => _launchExternalUrl(context, job.whatsappApplyUrl),
+                        ),
+                      ),
+                      const Divider(height: 16),
+                    ],
+                    if (job.contactEmail != null && job.contactEmail!.isNotEmpty) ...[
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3E8FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.email_outlined, color: Color(0xFF9333EA)),
+                        ),
+                        title: Text(job.contactEmail!, style: AppTypography.titleSmall),
+                        subtitle: const Text('Email Application', style: AppTypography.captionMedium),
+                        trailing: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF9333EA),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.mail_outline_rounded, size: 16),
+                          label: const Text('Email'),
+                          onPressed: () => _launchExternalUrl(context, 'mailto:${job.contactEmail}'),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Description & Responsibilities
+              if ((job.jobDescription?.isNotEmpty ?? false) || job.body.isNotEmpty) ...[
+                const NjSectionHeader(
+                  title: 'Job Description & Duties',
+                  icon: Icons.description_outlined,
+                ),
+                NjCard(
+                  child: Text(
+                    job.jobDescription?.isNotEmpty == true ? job.jobDescription! : job.body,
+                    style: AppTypography.bodyMedium,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Requirements & Documents
+              if (job.requirements?.isNotEmpty ?? false) ...[
+                const NjSectionHeader(
+                  title: 'Requirements & Documents',
+                  icon: Icons.fact_check_outlined,
+                ),
+                NjCard(
+                  child: Text(
+                    job.requirements!,
+                    style: AppTypography.bodyMedium,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ] else ...[
+              // Standard Government 2x2 Overview
+              Row(
+                children: [
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.people_outline_rounded,
+                      title: 'Total Vacancies',
+                      value: job.vacancies.isNotEmpty
+                          ? job.vacancies
+                          : 'Not Specified',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.currency_rupee_rounded,
+                      title: 'Salary / Pay',
+                      value: job.salary.isNotEmpty ? job.salary : 'As per rules',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.calendar_today_outlined,
+                      title: 'Last Date',
+                      value: job.displayLastDate,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NjInfoTile(
+                      icon: Icons.location_on_outlined,
+                      title: 'Job Location',
+                      value: job.location.isNotEmpty ? job.location : 'All India',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // 3. Important Dates
+              if (job.importantDates.isNotEmpty ||
+                  job.applicationStartDate != null) ...[
+                const NjSectionHeader(
+                    title: 'Important Dates', icon: Icons.event_note_rounded),
+                NjCard(
+                  child: Column(
+                    children: [
+                      if (job.applicationStartDate != null &&
+                          job.applicationStartDate!.isNotEmpty)
+                        _buildDateRow(
+                            'Application Starts', job.applicationStartDate!),
+                      if (job.applicationLastDate != null &&
+                          job.applicationLastDate!.isNotEmpty)
+                        _buildDateRow('Last Date to Apply', job.displayLastDate,
+                            isHighlight: true),
+                      ...job.importantDates.map((d) {
+                        return _buildDateRow(
+                          d.label,
+                          d.isTentative ? '${d.date} (Tentative)' : d.date,
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ],
 
             // 4. Vacancy Breakdown
@@ -625,14 +830,26 @@ class JobDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: NjButton(
-                  label: 'Apply Online',
-                  icon: Icons.open_in_new_rounded,
-                  onPressed: () => _launchExternalUrl(
-                    context,
-                    job.applyUrl ?? job.officialWebsiteUrl,
-                  ),
-                ),
+                child: job.isPrivateJob && (job.whatsappApplyUrl?.isNotEmpty ?? false)
+                    ? NjButton(
+                        label: 'Apply via WhatsApp',
+                        icon: Icons.chat_bubble_rounded,
+                        onPressed: () => _launchExternalUrl(context, job.whatsappApplyUrl),
+                      )
+                    : job.isPrivateJob && (job.contactPhone?.isNotEmpty ?? false)
+                        ? NjButton(
+                            label: 'Call Employer',
+                            icon: Icons.phone_rounded,
+                            onPressed: () => _launchExternalUrl(context, 'tel:${job.contactPhone}'),
+                          )
+                        : NjButton(
+                            label: 'Apply Online',
+                            icon: Icons.open_in_new_rounded,
+                            onPressed: () => _launchExternalUrl(
+                              context,
+                              job.applyUrl ?? job.officialWebsiteUrl,
+                            ),
+                          ),
               ),
             ],
           ),
@@ -645,19 +862,27 @@ class JobDetailScreen extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: isHighlight
-                ? AppTypography.labelLarge.copyWith(color: AppColors.error)
-                : AppTypography.bodyMedium,
+          Expanded(
+            flex: 5,
+            child: Text(
+              label,
+              style: isHighlight
+                  ? AppTypography.labelLarge.copyWith(color: AppColors.error)
+                  : AppTypography.bodyMedium,
+            ),
           ),
-          Text(
-            value,
-            style: isHighlight
-                ? AppTypography.titleSmall.copyWith(color: AppColors.error)
-                : AppTypography.titleSmall,
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 4,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: isHighlight
+                  ? AppTypography.titleSmall.copyWith(color: AppColors.error)
+                  : AppTypography.titleSmall,
+            ),
           ),
         ],
       ),

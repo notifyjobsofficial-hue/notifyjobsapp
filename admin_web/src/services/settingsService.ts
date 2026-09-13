@@ -50,6 +50,48 @@ export const defaultAppSettings: AppSettings = {
   playStoreUrl: 'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
   disclaimer:
     'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
+
+  // Announcement Banner (v1.1)
+  announcementEnabled: false,
+  announcementType: 'New',
+  announcementText: '',
+  announcementUrl: '',
+  announcementStartAt: '',
+  announcementEndAt: '',
+  announcementPriority: 1,
+
+  // Live Updates (v1.1)
+  liveUpdatesEnabled: true,
+  liveUpdatesTitle: 'Live Updates',
+  liveUpdatesMaxItems: 5,
+  liveUpdatesAutoSlideEnabled: true,
+  liveUpdatesAutoSlideSeconds: 4,
+
+  // Closing Soon (v1.1)
+  closingSoonEnabled: true,
+  closingSoonTitle: 'Closing Soon',
+  closingSoonDaysThreshold: 7,
+  closingSoonMaxItems: 5,
+
+  // Popular This Week (v1.1)
+  popularEnabled: true,
+  popularTitle: 'Popular This Week',
+  popularMaxItems: 5,
+
+  // Latest Jobs (v1.1)
+  latestJobsEnabled: true,
+  latestJobsTitle: 'Latest Jobs',
+  latestJobsMaxItems: 6,
+
+  // Quick Categories (v1.1)
+  quickCategoriesEnabled: true,
+  quickCategoriesTitle: 'Quick Categories',
+
+  // Central Feature Flags (v1.1)
+  proPageEnabled: false,
+  supportPageEnabled: true,
+  notificationPreferencesEnabled: true,
+  socialSectionEnabled: true,
 };
 
 let memorySettings = { ...defaultAppSettings };

@@ -26,6 +26,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final List<Map<String, String>> _categories = const [
     {'id': 'all', 'label': 'All'},
     {'id': 'latest_jobs', 'label': 'Latest Jobs'},
+    {'id': 'andaman_job', 'label': 'A&N Jobs'},
+    {'id': 'private_job', 'label': 'Private Jobs'},
     {'id': 'admit_card', 'label': 'Admit Cards'},
     {'id': 'results', 'label': 'Results'},
     {'id': 'answer_key', 'label': 'Answer Keys'},
@@ -226,7 +228,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       itemBuilder: (context, index) {
         final item = filtered[index];
         if (item.contentType == 'government_job' ||
-            item.contentType == 'latest_jobs') {
+            item.contentType == 'latest_jobs' ||
+            item.contentType == 'andaman_job' ||
+            item.contentType == 'private_job') {
           return NjJobCard(
             job: item,
             onTap: () {
