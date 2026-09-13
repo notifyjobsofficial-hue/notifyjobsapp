@@ -244,8 +244,71 @@ export async function archiveContent(id: string): Promise<void> {
   }
 }
 
+export async function toggleContentPublish(id: string, isPublished: boolean): Promise<void> {
+  const docRef = doc(db, COLLECTION_NAME, id);
+  const now = new Date().toISOString();
+  await updateDoc(docRef, {
+    status: isPublished ? 'published' : 'draft',
+    isPublished,
+    updatedAt: now,
+    ...(isPublished ? { publishedAt: now } : {}),
+  });
+
+  const item = memoryContent.find((i) => i.id === id);
+  if (item) {
+    item.status = isPublished ? 'published' : 'draft';
+    item.isPublished = isPublished;
+    item.updatedAt = now;
+    if (isPublished && !item.publishedAt) {
+      item.publishedAt = now;
+    }
+  }
+}
+
+/**
+ * Shared category and tag matcher for content list filtering and real-time counts
+ */
+export function isCategoryMatch(item: ContentItem, categoryFilter: string): boolean {
+  if (categoryFilter === 'all') return true;
+  const f = categoryFilter.toLowerCase();
+  if (item.categoryIds?.includes(categoryFilter)) return true;
+
+  if (f === 'ssc') {
+    if (item.categoryIds?.includes('ssc')) return true;
+    if (item.tags?.some((t) => t.toLowerCase().includes('ssc'))) return true;
+    if (item.organization?.toLowerCase().includes('ssc')) return true;
+    if (item.title?.toLowerCase().includes('ssc')) return true;
+  }
+  if (f === 'railway') {
+    if (item.categoryIds?.includes('railway') || item.categoryIds?.includes('railways')) return true;
+    if (item.tags?.some((t) => t.toLowerCase().includes('railway') || t.toLowerCase().includes('rrb'))) return true;
+    if (item.organization?.toLowerCase().includes('railway') || item.organization?.toLowerCase().includes('rrb')) return true;
+    if (item.title?.toLowerCase().includes('railway') || item.title?.toLowerCase().includes('rrb')) return true;
+  }
+  if (f === 'banking') {
+    if (item.categoryIds?.includes('banking') || item.categoryIds?.includes('bank')) return true;
+    if (item.tags?.some((t) => t.toLowerCase().includes('bank') || t.toLowerCase().includes('ibps') || t.toLowerCase().includes('sbi'))) return true;
+    if (item.organization?.toLowerCase().includes('bank') || item.organization?.toLowerCase().includes('ibps') || item.organization?.toLowerCase().includes('sbi')) return true;
+    if (item.title?.toLowerCase().includes('bank') || item.title?.toLowerCase().includes('ibps') || item.title?.toLowerCase().includes('sbi')) return true;
+  }
+  if (f === 'police-defence' || f === 'police' || f === 'defence') {
+    if (item.categoryIds?.includes('police-defence') || item.categoryIds?.includes('police') || item.categoryIds?.includes('defence')) return true;
+    if (item.tags?.some((t) => t.toLowerCase().includes('police') || t.toLowerCase().includes('defence') || t.toLowerCase().includes('army') || t.toLowerCase().includes('navy') || t.toLowerCase().includes('air force'))) return true;
+    if (item.organization?.toLowerCase().includes('police') || item.organization?.toLowerCase().includes('defence') || item.organization?.toLowerCase().includes('crpf') || item.organization?.toLowerCase().includes('bsf') || item.organization?.toLowerCase().includes('cisf')) return true;
+    if (item.title?.toLowerCase().includes('police') || item.title?.toLowerCase().includes('defence') || item.title?.toLowerCase().includes('constable') || item.title?.toLowerCase().includes('si ') || item.title?.toLowerCase().includes('sub inspector')) return true;
+  }
+
+  return Boolean(
+    item.categoryIds?.includes(categoryFilter) ||
+    item.tags?.some((t) => t.toLowerCase() === f || t.toLowerCase().includes(f)) ||
+    item.organization?.toLowerCase().includes(f) ||
+    item.title?.toLowerCase().includes(f)
+  );
+}
+
 export async function deleteContentPermanently(id: string): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, id);
   await deleteDoc(docRef);
   memoryContent = memoryContent.filter((i) => i.id !== id);
 }
+

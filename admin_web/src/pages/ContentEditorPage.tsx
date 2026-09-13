@@ -24,7 +24,12 @@ import {
   Clock,
   Phone,
   Mail,
-  MessageSquare
+  MessageSquare,
+  Landmark,
+  FileCheck,
+  CheckSquare,
+  Newspaper,
+  ChevronRight,
 } from 'lucide-react';
 import {
   ContentItem,
@@ -52,6 +57,7 @@ import { AdminModal } from '../components/common/AdminModal';
 
 interface ContentEditorPageProps {
   initialItem?: ContentItem | null;
+  presetType?: ContentType;
   categories: Category[];
   userEmail: string;
   onSave: (item: Partial<ContentItem>, sendPush: boolean, pushTopic: string) => Promise<void>;
@@ -60,16 +66,18 @@ interface ContentEditorPageProps {
 
 export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
   initialItem,
+  presetType,
   categories,
   userEmail,
   onSave,
   onCancel,
 }) => {
   const isEditing = Boolean(initialItem?.id);
+  const [showTypeSelector, setShowTypeSelector] = useState(!isEditing && !presetType);
 
   // Form State
   const [contentType, setContentType] = useState<ContentType>(
-    initialItem?.contentType || 'government_job'
+    initialItem?.contentType || presetType || 'government_job'
   );
   const [jobType, setJobType] = useState<JobType>(
     (initialItem?.jobType as JobType) || (contentType === 'private_job' ? 'private' : 'government')
@@ -334,6 +342,127 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
     }
   };
 
+  if (showTypeSelector) {
+    const creationOptions: {
+      type: ContentType;
+      title: string;
+      shortTitle: string;
+      description: string;
+      icon: React.ReactNode;
+      bgClass: string;
+    }[] = [
+      {
+        type: 'government_job',
+        title: 'Government Job',
+        shortTitle: 'Govt Job',
+        description: 'Central, State, PSU, Railway, SSC, Banking, Police & Defence vacancy notifications.',
+        icon: <Landmark className="w-6 h-6 text-[#159B76]" />,
+        bgClass: 'bg-emerald-50 text-[#159B76]',
+      },
+      {
+        type: 'andaman_job',
+        title: 'Andaman & Nicobar Job',
+        shortTitle: 'A&N Job',
+        description: 'Recruitments in Port Blair and Island districts (UT Administration or Private Employers).',
+        icon: <MapPin className="w-6 h-6 text-[#0D9488]" />,
+        bgClass: 'bg-teal-50 text-[#0D9488]',
+      },
+      {
+        type: 'admit_card',
+        title: 'Admit Card / Hall Ticket',
+        shortTitle: 'Admit Card',
+        description: 'Examination hall tickets, call letters, exam city slips, and download instructions.',
+        icon: <FileCheck className="w-6 h-6 text-purple-600" />,
+        bgClass: 'bg-purple-50 text-purple-600',
+      },
+      {
+        type: 'result',
+        title: 'Exam Result / Merit List',
+        shortTitle: 'Result',
+        description: 'Declared exam scorecards, cut-off marks, merit lists, and candidate selections.',
+        icon: <Award className="w-6 h-6 text-orange-600" />,
+        bgClass: 'bg-orange-50 text-orange-600',
+      },
+      {
+        type: 'answer_key',
+        title: 'Answer Key & Objections',
+        shortTitle: 'Answer Key',
+        description: 'Provisional & final answer keys, response sheets, and online challenge portals.',
+        icon: <CheckSquare className="w-6 h-6 text-sky-600" />,
+        bgClass: 'bg-sky-50 text-sky-600',
+      },
+      {
+        type: 'syllabus',
+        title: 'Syllabus & Exam Pattern',
+        shortTitle: 'Syllabus',
+        description: 'Detailed marking schemes, exam patterns, stage structures, and topic breakdowns.',
+        icon: <BookOpen className="w-6 h-6 text-emerald-700" />,
+        bgClass: 'bg-emerald-50 text-emerald-700',
+      },
+      {
+        type: 'article',
+        title: 'Editorial Article / Guide',
+        shortTitle: 'Article',
+        description: 'Preparation roadmaps, tips, educational career advice, and policy announcements.',
+        icon: <Newspaper className="w-6 h-6 text-slate-700" />,
+        bgClass: 'bg-slate-100 text-slate-700',
+      },
+    ];
+
+    return (
+      <div className="max-w-4xl mx-auto py-6 px-2 sm:px-4 space-y-6 animate-fadeIn">
+        <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200">
+          <div>
+            <nav className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-1">
+              <span>Content Management</span>
+              <ChevronRight className="w-3 h-3 text-slate-300" />
+              <span className="text-slate-700 font-semibold">Add New</span>
+            </nav>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              What do you want to create?
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Select a content type to load the correct editor fields, forms, and verification rules.
+            </p>
+          </div>
+          <AdminButton variant="outline" size="sm" onClick={onCancel}>
+            Cancel
+          </AdminButton>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          {creationOptions.map((opt) => (
+            <div
+              key={opt.type}
+              onClick={() => {
+                setContentType(opt.type);
+                if (opt.type === 'andaman_job') setJobType('government');
+                setShowTypeSelector(false);
+              }}
+              className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm hover:border-[#159B76] hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3.5 transition-transform group-hover:scale-105 ${opt.bgClass}`}>
+                  {opt.icon}
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#159B76] transition-colors">
+                  {opt.title}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  {opt.description}
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#159B76]">
+                <span>Create {opt.shortTitle}</span>
+                <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-24">
       {/* Top Header & Action Bar */}
@@ -346,10 +475,21 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              {isEditing ? 'Edit Post' : 'Create New Post'}
-            </h2>
-            <p className="text-xs text-slate-500">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-bold text-slate-900">
+                {isEditing ? 'Edit Post' : 'Create New Post'}
+              </h2>
+              {!isEditing && (
+                <button
+                  type="button"
+                  onClick={() => setShowTypeSelector(true)}
+                  className="text-xs text-[#159B76] font-semibold hover:underline bg-[#159B76]/10 px-2 py-0.5 rounded-full"
+                >
+                  Change Type
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
               {isArticle ? 'Publish an editorial article or roadmap' : 'Enter recruitment specifications and official source details'}
             </p>
           </div>
@@ -428,7 +568,6 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
               options={[
                 { value: 'government_job', label: 'Government Job (All India / State)' },
                 { value: 'andaman_job', label: 'Andaman & Nicobar Job' },
-                { value: 'private_job', label: 'Private Sector Job' },
                 { value: 'admit_card', label: 'Admit Card / Hall Ticket' },
                 { value: 'result', label: 'Exam Result / Merit List' },
                 { value: 'answer_key', label: 'Answer Key & Objections' },

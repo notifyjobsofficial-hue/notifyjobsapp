@@ -28,6 +28,8 @@ import {
   saveContent,
   archiveContent,
   deleteContentPermanently,
+  toggleContentPublish,
+  isCategoryMatch,
 } from './services/contentService';
 import {
   fetchCategories,
@@ -59,6 +61,7 @@ export function App() {
 
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+  const [presetType, setPresetType] = useState<ContentType | undefined>(undefined);
 
   // App Data
   const [contentList, setContentList] = useState<ContentItem[]>([]);
@@ -173,6 +176,34 @@ export function App() {
     }
   };
 
+  const handleDuplicateContent = (item: ContentItem) => {
+    const cloned: ContentItem = {
+      ...item,
+      id: '',
+      title: `${item.title} (Copy)`,
+      slug: `${item.slug || 'copy'}-${Date.now().toString().slice(-4)}`,
+      status: 'draft',
+      isPublished: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setEditingItem(cloned);
+    setPresetType(item.contentType);
+    setCurrentView('content_add');
+    addToast('info', 'Cloned into Draft', 'Make any changes and click Save to create.');
+  };
+
+  const handleTogglePublish = async (id: string, isPublished: boolean) => {
+    try {
+      await toggleContentPublish(id, isPublished);
+      addToast('success', isPublished ? 'Content Published Live' : 'Content Moved to Drafts');
+      const updated = await fetchContentList({});
+      setContentList(updated);
+    } catch (err: any) {
+      addToast('error', 'Failed to update publish state', err?.message);
+    }
+  };
+
   const handleArchiveContent = async (id: string) => {
     await archiveContent(id);
     addToast('info', 'Content Moved to Archive');
@@ -217,6 +248,103 @@ export function App() {
     addToast('success', 'App settings updated in real-time');
   };
 
+  // Titles mapping
+  const viewTitles: Record<NavView, string> = {
+    dashboard: 'Dashboard Overview',
+    content_all: 'All Content',
+    content_add: 'Create New Content',
+    jobs_all: 'All Jobs',
+    jobs_govt: 'Government Jobs',
+    jobs_andaman: 'Andaman & Nicobar Jobs',
+    jobs_ssc: 'SSC Jobs & Notifications',
+    jobs_railway: 'Railway Recruitment',
+    jobs_banking: 'Banking Recruitments',
+    jobs_police: 'Police & Defence Jobs',
+    updates_admit_cards: 'Admit Cards & Hall Tickets',
+    updates_results: 'Exam Results & Merit Lists',
+    updates_answer_keys: 'Answer Keys & Objections',
+    updates_syllabus: 'Syllabus & Exam Pattern',
+    articles_all: 'Editorial Articles & Guides',
+    // Legacy aliases
+    content_govt: 'Government Jobs',
+    content_private: 'Private Jobs',
+    content_andaman: 'Andaman & Nicobar Jobs',
+    content_ssc: 'SSC Jobs',
+    content_railway: 'Railway Jobs',
+    content_banking: 'Banking Jobs',
+    content_police: 'Police & Defence Jobs',
+    content_admit_cards: 'Admit Cards',
+    content_results: 'Results',
+    content_answer_keys: 'Answer Keys',
+    content_syllabus: 'Syllabus',
+    content_articles: 'Articles',
+    // Admin features
+    categories: 'Category Management',
+    homepage: 'Homepage Layout Manager',
+    notifications: 'Push Notification Hub',
+    social_support: 'Social Channels & Support',
+    ad_settings: 'AdMob & Reward Controls',
+    app_settings: 'Remote App Settings',
+    admin_users: 'Admin Team & Roles',
+    diagnostics: 'Diagnostics & Connectivity',
+  };
+
+  // Synchronize hash with currentView for bookmarking and browser navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as NavView;
+      if (hash && viewTitles[hash]) {
+        setCurrentView(hash);
+      }
+    };
+
+    const initialHash = window.location.hash.replace('#', '') as NavView;
+    if (initialHash && viewTitles[initialHash]) {
+      setCurrentView(initialHash);
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash.replace('#', '') !== currentView) {
+      window.location.hash = currentView;
+    }
+  }, [currentView]);
+
+  // Compute real-time sidebar count badges matching CMS list filters
+  const sidebarCounts = React.useMemo(() => {
+    return {
+      all: contentList.length,
+      jobs_all: contentList.filter(
+        (i) => i.contentType === 'government_job' || i.contentType === 'andaman_job' || i.contentType === 'private_job'
+      ).length,
+      jobs_govt: contentList.filter((i) => i.contentType === 'government_job').length,
+      jobs_andaman: contentList.filter((i) => i.contentType === 'andaman_job').length,
+      jobs_ssc: contentList.filter(
+        (i) => (i.contentType === 'government_job' || i.contentType === 'andaman_job') && isCategoryMatch(i, 'ssc')
+      ).length,
+      jobs_railway: contentList.filter(
+        (i) => (i.contentType === 'government_job' || i.contentType === 'andaman_job') && isCategoryMatch(i, 'railway')
+      ).length,
+      jobs_banking: contentList.filter(
+        (i) => (i.contentType === 'government_job' || i.contentType === 'andaman_job') && isCategoryMatch(i, 'banking')
+      ).length,
+      jobs_police: contentList.filter(
+        (i) => (i.contentType === 'government_job' || i.contentType === 'andaman_job') && isCategoryMatch(i, 'police-defence')
+      ).length,
+      updates_all: contentList.filter((i) =>
+        ['admit_card', 'result', 'answer_key', 'syllabus'].includes(i.contentType)
+      ).length,
+      updates_admit_cards: contentList.filter((i) => i.contentType === 'admit_card').length,
+      updates_results: contentList.filter((i) => i.contentType === 'result').length,
+      updates_answer_keys: contentList.filter((i) => i.contentType === 'answer_key').length,
+      updates_syllabus: contentList.filter((i) => i.contentType === 'syllabus').length,
+      articles_all: contentList.filter((i) => i.contentType === 'article').length,
+    };
+  }, [contentList]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -240,70 +368,18 @@ export function App() {
     );
   }
 
-  // Titles mapping
-  const viewTitles: Record<NavView, string> = {
-    dashboard: 'Dashboard Overview',
-    content_all: 'All Content & Jobs',
-    content_add: 'Create New Content',
-    content_govt: 'Government Jobs',
-    content_private: 'Private Jobs',
-    content_andaman: 'Andaman & Nicobar Jobs',
-    content_ssc: 'SSC Jobs & Notifications',
-    content_railway: 'Railway Recruitment',
-    content_banking: 'Banking Recruitments',
-    content_police: 'Police & Defence Jobs',
-    content_admit_cards: 'Admit Cards & Hall Tickets',
-    content_results: 'Exam Results & Merit Lists',
-    content_answer_keys: 'Answer Keys & Objections',
-    content_syllabus: 'Syllabus & Exam Pattern',
-    content_articles: 'Editorial Articles & Guides',
-    categories: 'Category Management',
-    homepage: 'Homepage Layout Manager',
-    notifications: 'Push Notification Hub',
-    social_support: 'Social Channels & Support',
-    ad_settings: 'AdMob & Reward Controls',
-    app_settings: 'Remote App Settings',
-    admin_users: 'Admin Team & Roles',
-    diagnostics: 'Diagnostics & Connectivity',
-  };
-
-  // Content type filter helper
-  const getContentTypeForView = (view: NavView): ContentType | 'all' => {
-    switch (view) {
-      case 'content_govt':
-      case 'content_andaman':
-      case 'content_ssc':
-      case 'content_railway':
-      case 'content_banking':
-      case 'content_police':
-        return 'government_job';
-      case 'content_private':
-        return 'private_job';
-      case 'content_admit_cards':
-        return 'admit_card';
-      case 'content_results':
-        return 'result';
-      case 'content_answer_keys':
-        return 'answer_key';
-      case 'content_syllabus':
-        return 'syllabus';
-      case 'content_articles':
-        return 'article';
-      default:
-        return 'all';
-    }
-  };
-
   const renderCurrentView = () => {
     if (currentView === 'content_add' || editingItem !== null) {
       return (
         <ContentEditorPage
           initialItem={editingItem}
           categories={categories}
+          presetType={presetType}
           userEmail={currentUser.email}
           onSave={handleSaveContent}
           onCancel={() => {
             setEditingItem(null);
+            setPresetType(undefined);
             setCurrentView('content_all');
           }}
         />
@@ -381,22 +457,217 @@ export function App() {
       case 'diagnostics':
         return <DiagnosticsPage />;
 
-      default:
-        // Content list views (all, govt, andaman, ssc, results, etc.)
+      default: {
+        // Precise configurations for all content views
+        const contentConfigs: Record<
+          string,
+          {
+            type: ContentType | 'all' | 'jobs';
+            category: string | 'all';
+            title: string;
+            breadcrumbs: string[];
+            defaultPreset?: ContentType;
+          }
+        > = {
+          content_all: {
+            type: 'all',
+            category: 'all',
+            title: 'All Content',
+            breadcrumbs: ['Content Management', 'All Content'],
+          },
+          jobs_all: {
+            type: 'jobs',
+            category: 'all',
+            title: 'All Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'All Jobs'],
+            defaultPreset: 'government_job',
+          },
+          jobs_govt: {
+            type: 'government_job',
+            category: 'all',
+            title: 'Government Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'Government Jobs'],
+            defaultPreset: 'government_job',
+          },
+          content_govt: {
+            type: 'government_job',
+            category: 'all',
+            title: 'Government Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'Government Jobs'],
+            defaultPreset: 'government_job',
+          },
+          jobs_andaman: {
+            type: 'andaman_job',
+            category: 'all',
+            title: 'Andaman & Nicobar Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'A&N Jobs'],
+            defaultPreset: 'andaman_job',
+          },
+          content_andaman: {
+            type: 'andaman_job',
+            category: 'all',
+            title: 'Andaman & Nicobar Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'A&N Jobs'],
+            defaultPreset: 'andaman_job',
+          },
+          jobs_ssc: {
+            type: 'government_job',
+            category: 'ssc',
+            title: 'SSC Recruitment',
+            breadcrumbs: ['Content Management', 'Jobs', 'SSC'],
+            defaultPreset: 'government_job',
+          },
+          content_ssc: {
+            type: 'government_job',
+            category: 'ssc',
+            title: 'SSC Recruitment',
+            breadcrumbs: ['Content Management', 'Jobs', 'SSC'],
+            defaultPreset: 'government_job',
+          },
+          jobs_railway: {
+            type: 'government_job',
+            category: 'railway',
+            title: 'Railway Recruitment',
+            breadcrumbs: ['Content Management', 'Jobs', 'Railway'],
+            defaultPreset: 'government_job',
+          },
+          content_railway: {
+            type: 'government_job',
+            category: 'railway',
+            title: 'Railway Recruitment',
+            breadcrumbs: ['Content Management', 'Jobs', 'Railway'],
+            defaultPreset: 'government_job',
+          },
+          jobs_banking: {
+            type: 'government_job',
+            category: 'banking',
+            title: 'Banking Recruitments',
+            breadcrumbs: ['Content Management', 'Jobs', 'Banking'],
+            defaultPreset: 'government_job',
+          },
+          content_banking: {
+            type: 'government_job',
+            category: 'banking',
+            title: 'Banking Recruitments',
+            breadcrumbs: ['Content Management', 'Jobs', 'Banking'],
+            defaultPreset: 'government_job',
+          },
+          jobs_police: {
+            type: 'government_job',
+            category: 'police-defence',
+            title: 'Police & Defence Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'Police & Defence'],
+            defaultPreset: 'government_job',
+          },
+          content_police: {
+            type: 'government_job',
+            category: 'police-defence',
+            title: 'Police & Defence Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'Police & Defence'],
+            defaultPreset: 'government_job',
+          },
+          updates_admit_cards: {
+            type: 'admit_card',
+            category: 'all',
+            title: 'Admit Cards & Hall Tickets',
+            breadcrumbs: ['Content Management', 'Updates', 'Admit Cards'],
+            defaultPreset: 'admit_card',
+          },
+          content_admit_cards: {
+            type: 'admit_card',
+            category: 'all',
+            title: 'Admit Cards & Hall Tickets',
+            breadcrumbs: ['Content Management', 'Updates', 'Admit Cards'],
+            defaultPreset: 'admit_card',
+          },
+          updates_results: {
+            type: 'result',
+            category: 'all',
+            title: 'Exam Results & Merit Lists',
+            breadcrumbs: ['Content Management', 'Updates', 'Results'],
+            defaultPreset: 'result',
+          },
+          content_results: {
+            type: 'result',
+            category: 'all',
+            title: 'Exam Results & Merit Lists',
+            breadcrumbs: ['Content Management', 'Updates', 'Results'],
+            defaultPreset: 'result',
+          },
+          updates_answer_keys: {
+            type: 'answer_key',
+            category: 'all',
+            title: 'Answer Keys & Objections',
+            breadcrumbs: ['Content Management', 'Updates', 'Answer Keys'],
+            defaultPreset: 'answer_key',
+          },
+          content_answer_keys: {
+            type: 'answer_key',
+            category: 'all',
+            title: 'Answer Keys & Objections',
+            breadcrumbs: ['Content Management', 'Updates', 'Answer Keys'],
+            defaultPreset: 'answer_key',
+          },
+          updates_syllabus: {
+            type: 'syllabus',
+            category: 'all',
+            title: 'Syllabus & Exam Pattern',
+            breadcrumbs: ['Content Management', 'Updates', 'Syllabus'],
+            defaultPreset: 'syllabus',
+          },
+          content_syllabus: {
+            type: 'syllabus',
+            category: 'all',
+            title: 'Syllabus & Exam Pattern',
+            breadcrumbs: ['Content Management', 'Updates', 'Syllabus'],
+            defaultPreset: 'syllabus',
+          },
+          articles_all: {
+            type: 'article',
+            category: 'all',
+            title: 'Editorial Articles & Guides',
+            breadcrumbs: ['Content Management', 'Articles'],
+            defaultPreset: 'article',
+          },
+          content_articles: {
+            type: 'article',
+            category: 'all',
+            title: 'Editorial Articles & Guides',
+            breadcrumbs: ['Content Management', 'Articles'],
+            defaultPreset: 'article',
+          },
+          content_private: {
+            type: 'private_job',
+            category: 'all',
+            title: 'Private Jobs',
+            breadcrumbs: ['Content Management', 'Jobs', 'Private Jobs'],
+          },
+        };
+
+        const config = contentConfigs[currentView] || contentConfigs.content_all;
+
         return (
           <ContentListPage
             items={contentList}
-            currentTypeFilter={getContentTypeForView(currentView)}
-            onAddNew={() => {
+            categories={categories}
+            currentTypeFilter={config.type}
+            currentCategoryFilter={config.category}
+            pageTitle={config.title}
+            breadcrumbs={config.breadcrumbs}
+            onAddNew={(type) => {
               setEditingItem(null);
+              setPresetType(type || config.defaultPreset);
               setCurrentView('content_add');
             }}
             onEditItem={(item) => setEditingItem(item)}
+            onDuplicateItem={handleDuplicateContent}
             onPreviewItem={(item) => setPreviewItem(item)}
+            onTogglePublish={handleTogglePublish}
             onArchiveItem={handleArchiveContent}
             onDeleteItem={handleDeleteContent}
           />
         );
+      }
     }
   };
 
@@ -410,12 +681,14 @@ export function App() {
       title={viewTitles[currentView] || 'Notify Jobs Admin'}
       userEmail={currentUser.email}
       userRole={currentUser.role}
+      counts={sidebarCounts}
       onLogout={() => {
         auth.signOut().catch(() => {});
         setCurrentUser(null);
       }}
       onAddNew={() => {
         setEditingItem(null);
+        setPresetType(undefined);
         setCurrentView('content_add');
       }}
       onOpenMobilePreview={() => {

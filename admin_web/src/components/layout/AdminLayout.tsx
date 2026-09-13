@@ -11,6 +11,7 @@ interface AdminLayoutProps {
   onLogout: () => void;
   onAddNew?: () => void;
   onOpenMobilePreview?: () => void;
+  counts?: Record<string, number>;
   children: React.ReactNode;
 }
 
@@ -23,6 +24,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onLogout,
   onAddNew,
   onOpenMobilePreview,
+  counts,
   children,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -38,6 +40,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         userEmail={userEmail}
         userRole={userRole}
         onLogout={onLogout}
+        counts={counts}
       />
 
       {/* Main Content Area */}
