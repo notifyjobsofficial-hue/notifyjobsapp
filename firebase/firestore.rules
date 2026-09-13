@@ -30,10 +30,12 @@ service cloud.firestore {
     }
 
     // Admins Collection
-    // Super admins can read and write all admin records.
-    // Individual admins can read their own record to verify their permissions.
+    // Individual admins can read their own record directly without circular dependency.
+    // Super admins can read any individual admin record or list all admins.
+    // Super admins can create, update, or delete admin documents.
     match /admins/{adminId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == adminId);
+      allow get: if (isAuthenticated() && request.auth.uid == adminId) || isSuperAdmin();
+      allow list: if isSuperAdmin();
       allow create, update, delete: if isSuperAdmin();
     }
 

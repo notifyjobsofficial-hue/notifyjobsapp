@@ -1,0 +1,13 @@
+﻿{
+  "name": "notify-jobs-admin-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Administrative bootstrap and provisioning scripts for Notify Jobs",
+  "type": "module",
+  "scripts": {
+    "bootstrap": "node bootstrap-super-admin.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

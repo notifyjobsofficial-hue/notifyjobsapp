@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../firebase/config';
 import { AdminInput } from '../components/common/AdminInput';
 import { AdminButton } from '../components/common/AdminButton';
@@ -30,7 +30,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
 
       // Verify active admin record in Firestore admins/{uid}
@@ -39,53 +39,49 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
       if (adminDocSnap.exists()) {
         const adminData = adminDocSnap.data();
-        if (adminData.active !== true) {
-          setError('Your admin account has been deactivated. Please contact the administrator.');
+        if (adminData?.active !== true) {
+          await auth.signOut();
+          setError('Your administrator account has been deactivated. Please contact the project owner.');
           setLoading(false);
           return;
         }
 
         onLoginSuccess({
-          email: user.email || email,
+          email: user.email || email.trim(),
           role: adminData.role || 'super_admin',
           uid: user.uid,
         });
       } else {
-        // If admins collection is empty, register the first authenticated user as super_admin
-        const existingAdmins = await getDocs(collection(db, 'admins'));
-        if (existingAdmins.empty) {
-          const initialAdmin = {
-            uid: user.uid,
-            email: user.email || email,
-            displayName: user.displayName || email.split('@')[0],
-            role: 'super_admin' as const,
-            active: true,
-            createdAt: new Date().toISOString(),
-          };
-          await setDoc(adminDocRef, initialAdmin, { merge: true });
-
-          onLoginSuccess({
-            email: user.email || email,
-            role: 'super_admin',
-            uid: user.uid,
-          });
-        } else {
-          setError(
-            `Access denied. Account (${user.email}) is not registered in the admin team.`
-          );
-          setLoading(false);
-          return;
-        }
+        // Authenticated in Firebase Auth, but not provisioned in /admins/{uid}
+        await auth.signOut();
+        setError(
+          'Your account is authenticated, but is not authorized as an administrator for Notify Jobs. If you are setting up the project, please run the super-admin bootstrap script.'
+        );
+        setLoading(false);
+        return;
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(
-        err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found'
-          ? 'Invalid email or password.'
-          : err.code === 'auth/network-request-failed'
-          ? 'Network error. Please check your internet connection.'
-          : err.message || 'Login failed. Please check credentials.'
-      );
+      const code = err?.code || '';
+
+      if (
+        code === 'auth/invalid-credential' ||
+        code === 'auth/wrong-password' ||
+        code === 'auth/user-not-found' ||
+        code === 'auth/invalid-email'
+      ) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (code === 'auth/user-disabled') {
+        setError('This account has been disabled. Please contact the administrator.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many unsuccessful login attempts. Please wait a few moments and try again.');
+      } else if (code === 'auth/network-request-failed') {
+        setError('Network connection error. Please check your internet connection and try again.');
+      } else if (code === 'permission-denied' || String(err?.message || '').toLowerCase().includes('permission')) {
+        setError('Access denied: This account lacks administrator authorization in Firestore.');
+      } else {
+        setError('Login failed. Please check your credentials or contact the administrator.');
+      }
     } finally {
       setLoading(false);
     }

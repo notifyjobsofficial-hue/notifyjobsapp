@@ -45,7 +45,7 @@ import {
   fetchNotificationLogs,
   sendPushNotification,
 } from './services/workerService';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, onAuthStateChanged } from './firebase/config';
 
 export function App() {
@@ -83,7 +83,7 @@ export function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Load Initial Data from Firestore
+  // Load Initial Data from Firestore (Only executed after admin role is verified)
   const loadAllData = async () => {
     setLoadingData(true);
     try {
@@ -115,35 +115,22 @@ export function App() {
           const adminDocRef = doc(db, 'admins', user.uid);
           const adminDoc = await getDoc(adminDocRef);
 
-          if (adminDoc.exists() && adminDoc.data().active === true) {
+          if (adminDoc.exists() && adminDoc.data()?.active === true) {
             const data = adminDoc.data();
             setCurrentUser({
-              email: user.email || '',
-              role: data.role || 'super_admin',
+              email: user.email || data.email || '',
+              role: (data.role as 'super_admin' | 'editor') || 'super_admin',
               uid: user.uid,
             });
             await loadAllData();
           } else {
-            // Check if admins collection is empty (initial setup bootstrap)
-            const existing = await getDocs(collection(db, 'admins'));
-            if (existing.empty) {
-              const bootstrapAdmin = {
-                uid: user.uid,
-                email: user.email || '',
-                displayName: user.displayName || user.email?.split('@')[0] || 'Super Admin',
-                role: 'super_admin' as const,
-                active: true,
-                createdAt: new Date().toISOString(),
-              };
-              await setDoc(adminDocRef, bootstrapAdmin, { merge: true });
-              setCurrentUser(bootstrapAdmin);
-              await loadAllData();
-            } else {
-              setCurrentUser(null);
-            }
+            console.warn('User authenticated in Firebase Auth but not registered/active in /admins:', user.email);
+            await auth.signOut();
+            setCurrentUser(null);
           }
         } catch (e) {
           console.error('Error verifying admin auth state:', e);
+          await auth.signOut();
           setCurrentUser(null);
         }
       } else {
