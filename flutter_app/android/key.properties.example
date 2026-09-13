@@ -1,0 +1,7 @@
+# Example Android keystore configuration for Notify Jobs
+# Copy this file to "key.properties" (do not commit key.properties to git)
+#
+# storePassword=YOUR_KEYSTORE_PASSWORD
+# keyPassword=YOUR_KEY_PASSWORD
+# keyAlias=notifyjobs-upload
+# storeFile=C:/path/to/notifyjobs-upload-key.jks

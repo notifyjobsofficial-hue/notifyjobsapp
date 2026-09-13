@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "885309400735",
+    "firebase_url": "https://notify-jobs-753b8-default-rtdb.firebaseio.com",
+    "project_id": "notify-jobs-753b8",
+    "storage_bucket": "notify-jobs-753b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885309400735:android:bfc8050d6eeb1fef22e4aa",
+        "android_client_info": {
+          "package_name": "com.notifyjobs.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4HKLllBma7SsHBeumtit83h9L9Z5eOzE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

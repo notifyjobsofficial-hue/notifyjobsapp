@@ -1,0 +1,10 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    deprecated_member_use: ignore
+    unnecessary_const: ignore
+    prefer_const_constructors: ignore
+  exclude:
+    - build/**
+    - android/**

@@ -1,0 +1,148 @@
+{
+  "jobs": [
+    {
+      "id": "mock_ssc_cgl_2026",
+      "title": "SSC Combined Graduate Level (CGL) 2026 Examination",
+      "organization": "Staff Selection Commission (SSC)",
+      "category": "latest_jobs",
+      "categoryName": "Latest Jobs",
+      "advtNo": "HQ-PPII03(1)/1/2026",
+      "status": "published",
+      "isPinned": true,
+      "isTrending": true,
+      "totalVacancies": 14582,
+      "salaryPayScale": "Level 4 to Level 8 (₹25,500 - ₹1,51,100)",
+      "location": "All India",
+      "qualification": [
+        "Bachelor's Degree from a recognized University or Institute",
+        "Final year candidates can also apply provisionally"
+      ],
+      "ageLimit": {
+        "minAge": 18,
+        "maxAge": 32,
+        "asOnDate": "2026-08-01T00:00:00.000Z",
+        "relaxationNotes": "SC/ST: 5 Years, OBC: 3 Years, PwD: 10 Years"
+      },
+      "importantDates": {
+        "notificationDate": "2026-06-24T00:00:00.000Z",
+        "applicationStart": "2026-06-24T00:00:00.000Z",
+        "lastDateToApply": "2026-07-27T23:59:00.000Z",
+        "feeLastDate": "2026-07-28T23:59:00.000Z",
+        "examDate": "September - October 2026",
+        "admitCardDate": "4 Days Before Exam",
+        "resultDate": "December 2026"
+      },
+      "applicationFees": {
+        "General / OBC / EWS": 100,
+        "SC / ST / PwD / Female": 0
+      },
+      "selectionProcess": [
+        "Tier-I Computer Based Examination",
+        "Tier-II Computer Based Examination",
+        "Data Entry Speed Test (DEST)",
+        "Document Verification (DV)"
+      ],
+      "examPatternSummary": "Tier 1: 100 questions (200 marks) across General Intelligence, General Awareness, Quantitative Aptitude, and English Comprehension. Duration: 60 minutes. Negative marking: 0.50 per wrong answer.",
+      "howToApply": [
+        "Visit the official SSC portal (ssc.gov.in).",
+        "Complete One-Time Registration (OTR) if not registered yet.",
+        "Log in and navigate to 'Apply Online' for CGL 2026.",
+        "Fill educational qualifications, category, and exam center choices.",
+        "Upload photograph and signature as per required dimensions.",
+        "Pay application fee (₹100 for unreserved) and submit."
+      ],
+      "vacancyBreakdown": [
+        { "postName": "Assistant Section Officer", "category": "UR", "vacancies": 690, "qualification": "Degree" },
+        { "postName": "Income Tax Inspector", "category": "UR", "vacancies": 320, "qualification": "Degree" },
+        { "postName": "Sub Inspector (CBI)", "category": "UR", "vacancies": 125, "qualification": "Degree" }
+      ],
+      "applyUrl": "https://ssc.gov.in",
+      "officialNotificationUrl": "https://ssc.gov.in/notice_cgl2026.pdf",
+      "officialWebsiteUrl": "https://ssc.gov.in",
+      "createdAt": "2026-06-24T10:00:00.000Z",
+      "updatedAt": "2026-06-24T10:00:00.000Z"
+    },
+    {
+      "id": "mock_andaman_group_b_2026",
+      "title": "Andaman & Nicobar Administration Group B & C Recruitment 2026",
+      "organization": "Andaman and Nicobar Administration",
+      "category": "andaman-nicobar",
+      "categoryName": "Andaman & Nicobar Jobs",
+      "advtNo": "4-12/2026/Recruitment",
+      "status": "published",
+      "isPinned": true,
+      "isTrending": false,
+      "totalVacancies": 418,
+      "salaryPayScale": "Level 5 to Level 7 (₹29,200 - ₹1,42,400)",
+      "location": "Port Blair & Outlying Islands",
+      "qualification": [
+        "Graduation in relevant discipline / Diploma from recognized institute",
+        "Local domicile preference as per administration norms"
+      ],
+      "ageLimit": {
+        "minAge": 18,
+        "maxAge": 33,
+        "asOnDate": "2026-07-01T00:00:00.000Z",
+        "relaxationNotes": "Upper age relaxation for female and government servants"
+      },
+      "importantDates": {
+        "notificationDate": "2026-07-01T00:00:00.000Z",
+        "applicationStart": "2026-07-05T00:00:00.000Z",
+        "lastDateToApply": "2026-08-10T23:59:00.000Z",
+        "examDate": "November 2026"
+      },
+      "applicationFees": {
+        "All Candidates": 0
+      },
+      "selectionProcess": [
+        "Written Examination (Objective)",
+        "Skill / Typing Test (where applicable)",
+        "Document Verification"
+      ],
+      "howToApply": [
+        "Access the e-recruitment portal at erecruitment.andaman.gov.in",
+        "Register with Aadhaar and email",
+        "Complete online application and upload certificates",
+        "Print acknowledgement slip"
+      ],
+      "applyUrl": "https://erecruitment.andaman.gov.in",
+      "officialNotificationUrl": "https://andaman.gov.in/notices/group_b_recruitment.pdf",
+      "officialWebsiteUrl": "https://andaman.gov.in",
+      "createdAt": "2026-07-01T09:00:00.000Z",
+      "updatedAt": "2026-07-01T09:00:00.000Z"
+    },
+    {
+      "id": "mock_ssc_chsl_admit_2026",
+      "title": "SSC CHSL Tier 1 Admit Card & Application Status 2026",
+      "organization": "Staff Selection Commission",
+      "category": "admit_card",
+      "categoryName": "Admit Cards",
+      "advtNo": "CHSL-2026/02",
+      "status": "published",
+      "isPinned": false,
+      "isTrending": true,
+      "totalVacancies": 0,
+      "salaryPayScale": "",
+      "location": "All India",
+      "qualification": [],
+      "ageLimit": {},
+      "importantDates": {
+        "examDate": "July 2026",
+        "admitCardDate": "Released Online"
+      },
+      "applicationFees": {},
+      "selectionProcess": [],
+      "howToApply": [
+        "Select your regional SSC portal (NR, CR, WR, ER, SR, etc.)",
+        "Enter Registration ID and Date of Birth",
+        "Check exam city, date, and shift timing",
+        "Download and take a printout of the admission certificate"
+      ],
+      "applyUrl": "https://ssc.gov.in/portal",
+      "officialNotificationUrl": "https://ssc.gov.in/chsl_notice.pdf",
+      "officialWebsiteUrl": "https://ssc.gov.in",
+      "createdAt": "2026-07-02T12:00:00.000Z",
+      "updatedAt": "2026-07-02T12:00:00.000Z"
+    }
+  ]
+}

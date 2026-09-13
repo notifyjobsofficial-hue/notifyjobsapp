@@ -1,0 +1,95 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/category_model.dart';
+
+final categoriesProvider = Provider<List<CategoryModel>>((ref) {
+  return const [
+    CategoryModel(
+      id: 'latest-jobs',
+      name: 'Latest Jobs',
+      slug: 'latest-jobs',
+      icon: 'work',
+      colorHex: '#159B76',
+      order: 1,
+    ),
+    CategoryModel(
+      id: 'andaman-nicobar',
+      name: 'Andaman & Nicobar',
+      slug: 'andaman-nicobar',
+      icon: 'location_on',
+      colorHex: '#0D9488',
+      order: 2,
+    ),
+    CategoryModel(
+      id: 'ssc',
+      name: 'SSC Jobs',
+      slug: 'ssc',
+      icon: 'account_balance',
+      colorHex: '#2563EB',
+      order: 3,
+    ),
+    CategoryModel(
+      id: 'railway',
+      name: 'Railway Jobs',
+      slug: 'railway',
+      icon: 'train',
+      colorHex: '#DC2626',
+      order: 4,
+    ),
+    CategoryModel(
+      id: 'banking',
+      name: 'Banking Jobs',
+      slug: 'banking',
+      icon: 'payments',
+      colorHex: '#059669',
+      order: 5,
+    ),
+    CategoryModel(
+      id: 'police-defence',
+      name: 'Police / Defence',
+      slug: 'police-defence',
+      icon: 'security',
+      colorHex: '#D97706',
+      order: 6,
+    ),
+    CategoryModel(
+      id: 'admit-cards',
+      name: 'Admit Cards',
+      slug: 'admit-cards',
+      icon: 'badge',
+      colorHex: '#7C3AED',
+      order: 7,
+    ),
+    CategoryModel(
+      id: 'results',
+      name: 'Results',
+      slug: 'results',
+      icon: 'emoji_events',
+      colorHex: '#EA580C',
+      order: 8,
+    ),
+    CategoryModel(
+      id: 'answer-keys',
+      name: 'Answer Keys',
+      slug: 'answer-keys',
+      icon: 'fact_check',
+      colorHex: '#0284C7',
+      order: 9,
+    ),
+    CategoryModel(
+      id: 'syllabus',
+      name: 'Syllabus',
+      slug: 'syllabus',
+      icon: 'menu_book',
+      colorHex: '#475569',
+      order: 10,
+    ),
+    CategoryModel(
+      id: 'articles',
+      name: 'Articles',
+      slug: 'articles',
+      icon: 'article',
+      colorHex: '#64748B',
+      order: 11,
+    ),
+  ];
+});

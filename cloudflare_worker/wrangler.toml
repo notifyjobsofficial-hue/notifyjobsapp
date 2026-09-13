@@ -1,0 +1,10 @@
+name = "notify-jobs-fcm-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+[vars]
+ENVIRONMENT = "production"
+# Secrets should be set with `wrangler secret put <KEY>`:
+# - FIREBASE_SERVICE_ACCOUNT (JSON string containing project_id, client_email, private_key)
+# - FIREBASE_PROJECT_ID (Optional if present in service account JSON)
+# - ADMIN_API_SECRET (Optional shared fallback secret)

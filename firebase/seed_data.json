@@ -1,0 +1,304 @@
+{
+  "app_settings": {
+    "main": {
+      "appTitle": "Notify Jobs",
+      "tagline": "Government Jobs. Results. Admit Cards. One App.",
+      "maintenanceMode": false,
+      "maintenanceMessage": "We are upgrading our servers to serve you better. We will be back online shortly!",
+      "minimumAppVersion": "1.0.0",
+      "latestAppVersion": "1.0.0",
+      "forceUpdateUrl": "https://play.google.com/store/apps/details?id=com.notifyjobs.app",
+      "supportEmail": "support@notifyjobs.in",
+      "supportWebsite": "https://notifyjobs.in",
+      "whatsappUrl": "https://whatsapp.com/channel/0029VaNotifyJobs",
+      "telegramUrl": "https://t.me/notifyjobs",
+      "youtubeUrl": "https://youtube.com/@notifyjobs",
+      "facebookUrl": "https://facebook.com/notifyjobs",
+      "instagramUrl": "https://instagram.com/notifyjobs",
+      "xUrl": "https://x.com/notifyjobs",
+      "privacyUrl": "https://notifyjobs.in/privacy",
+      "termsUrl": "https://notifyjobs.in/terms",
+      "disclaimerUrl": "https://notifyjobs.in/disclaimer",
+      "contactUrl": "https://notifyjobs.in/contact",
+      "rewardedAdsEnabled": true,
+      "rewardNotificationEnabled": true,
+      "rewardUnlockMinutes": 30,
+      "rewardPromptText": "Watch a short ad to unlock the official notification PDF.",
+      "rewardButtonText": "Watch Ad to Unlock",
+      "shareBaseUrl": "https://notifyjobs.in/job",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.notifyjobs.app",
+      "disclaimer": "Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying."
+    }
+  },
+  "categories": [
+    {
+      "id": "latest-jobs",
+      "name": "Latest Jobs",
+      "slug": "latest-jobs",
+      "icon": "work",
+      "color": "#159B76",
+      "order": 1,
+      "isActive": true
+    },
+    {
+      "id": "andaman-nicobar",
+      "name": "Andaman & Nicobar Jobs",
+      "slug": "andaman-nicobar",
+      "icon": "location_on",
+      "color": "#0D9488",
+      "order": 2,
+      "isActive": true
+    },
+    {
+      "id": "ssc",
+      "name": "SSC Jobs",
+      "slug": "ssc",
+      "icon": "account_balance",
+      "color": "#2563EB",
+      "order": 3,
+      "isActive": true
+    },
+    {
+      "id": "railway",
+      "name": "Railway Jobs",
+      "slug": "railway",
+      "icon": "train",
+      "color": "#DC2626",
+      "order": 4,
+      "isActive": true
+    },
+    {
+      "id": "banking",
+      "name": "Banking Jobs",
+      "slug": "banking",
+      "icon": "payments",
+      "color": "#059669",
+      "order": 5,
+      "isActive": true
+    },
+    {
+      "id": "police-defence",
+      "name": "Police / Defence",
+      "slug": "police-defence",
+      "icon": "security",
+      "color": "#D97706",
+      "order": 6,
+      "isActive": true
+    },
+    {
+      "id": "admit-cards",
+      "name": "Admit Cards",
+      "slug": "admit-cards",
+      "icon": "badge",
+      "color": "#7C3AED",
+      "order": 7,
+      "isActive": true
+    },
+    {
+      "id": "results",
+      "name": "Results",
+      "slug": "results",
+      "icon": "emoji_events",
+      "color": "#EA580C",
+      "order": 8,
+      "isActive": true
+    },
+    {
+      "id": "answer-keys",
+      "name": "Answer Keys",
+      "slug": "answer-keys",
+      "icon": "fact_check",
+      "color": "#0284C7",
+      "order": 9,
+      "isActive": true
+    },
+    {
+      "id": "syllabus",
+      "name": "Syllabus",
+      "slug": "syllabus",
+      "icon": "menu_book",
+      "color": "#475569",
+      "order": 10,
+      "isActive": true
+    },
+    {
+      "id": "articles",
+      "name": "Latest Articles",
+      "slug": "articles",
+      "icon": "article",
+      "color": "#64748B",
+      "order": 11,
+      "isActive": true
+    }
+  ],
+  "homepage_sections": [
+    {
+      "id": "latest-alerts",
+      "key": "latest_alerts",
+      "title": "Latest Alerts",
+      "subtitle": "Important updates and announcements",
+      "contentType": "government_job",
+      "categoryId": "",
+      "enabled": true,
+      "order": 1,
+      "limit": 5,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "quick-categories",
+      "key": "quick_categories",
+      "title": "Quick Categories",
+      "subtitle": "Explore by recruitment department",
+      "contentType": "",
+      "categoryId": "",
+      "enabled": true,
+      "order": 2,
+      "limit": 8,
+      "sort": "order_asc"
+    },
+    {
+      "id": "popular-this-week",
+      "key": "popular_this_week",
+      "title": "Popular This Week",
+      "subtitle": "Most viewed opportunities by aspirants",
+      "contentType": "government_job",
+      "categoryId": "",
+      "enabled": true,
+      "order": 3,
+      "limit": 5,
+      "sort": "views_desc"
+    },
+    {
+      "id": "latest-jobs-section",
+      "key": "latest_jobs",
+      "title": "Latest Government Jobs",
+      "subtitle": "Newly announced vacancies across India",
+      "contentType": "government_job",
+      "categoryId": "latest-jobs",
+      "enabled": true,
+      "order": 4,
+      "limit": 6,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "andaman-jobs-section",
+      "key": "andaman_jobs",
+      "title": "Andaman & Nicobar Jobs",
+      "subtitle": "Recruitments across Port Blair & Islands",
+      "contentType": "government_job",
+      "categoryId": "andaman-nicobar",
+      "enabled": true,
+      "order": 5,
+      "limit": 6,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "ssc-jobs-section",
+      "key": "ssc_jobs",
+      "title": "SSC Jobs",
+      "subtitle": "Staff Selection Commission CGL, CHSL, MTS & GD",
+      "contentType": "government_job",
+      "categoryId": "ssc",
+      "enabled": true,
+      "order": 6,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "railway-jobs-section",
+      "key": "railway_jobs",
+      "title": "Railway Jobs",
+      "subtitle": "RRB NTPC, Group D, ALP & Technician",
+      "contentType": "government_job",
+      "categoryId": "railway",
+      "enabled": true,
+      "order": 7,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "banking-jobs-section",
+      "key": "banking_jobs",
+      "title": "Banking Jobs",
+      "subtitle": "SBI, IBPS, RBI, NABARD & PSBs",
+      "contentType": "government_job",
+      "categoryId": "banking",
+      "enabled": true,
+      "order": 8,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "police-defence-section",
+      "key": "police_defence",
+      "title": "Police & Defence Jobs",
+      "subtitle": "Army, Navy, Air Force, CAPF & State Police",
+      "contentType": "government_job",
+      "categoryId": "police-defence",
+      "enabled": true,
+      "order": 9,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "results-section",
+      "key": "results",
+      "title": "Latest Results",
+      "subtitle": "Exam results, merit lists & selection cut-offs",
+      "contentType": "result",
+      "categoryId": "",
+      "enabled": true,
+      "order": 10,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "admit-cards-section",
+      "key": "admit_cards",
+      "title": "Admit Cards & Hall Tickets",
+      "subtitle": "Download call letters for upcoming exams",
+      "contentType": "admit_card",
+      "categoryId": "",
+      "enabled": true,
+      "order": 11,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "answer-keys-section",
+      "key": "answer_keys",
+      "title": "Answer Keys",
+      "subtitle": "Provisional & final answer keys with objection links",
+      "contentType": "answer_key",
+      "categoryId": "",
+      "enabled": true,
+      "order": 12,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "syllabus-section",
+      "key": "syllabus",
+      "title": "Syllabus & Exam Pattern",
+      "subtitle": "Updated syllabus and marking schemes",
+      "contentType": "syllabus",
+      "categoryId": "",
+      "enabled": true,
+      "order": 13,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    },
+    {
+      "id": "articles-section",
+      "key": "articles",
+      "title": "Latest Articles & Preparation Guides",
+      "subtitle": "Career tips, eligibility guides and exam strategies",
+      "contentType": "article",
+      "categoryId": "",
+      "enabled": true,
+      "order": 14,
+      "limit": 4,
+      "sort": "publishedAt_desc"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getAdminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isActiveAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        getAdminDoc().data.active == true;
+    }
+
+    function isSuperAdmin() {
+      return isActiveAdmin() && getAdminDoc().data.role == 'super_admin';
+    }
+
+    function isEditorOrAbove() {
+      return isActiveAdmin() && (
+        getAdminDoc().data.role == 'super_admin' ||
+        getAdminDoc().data.role == 'editor'
+      );
+    }
+
+    // Admins Collection
+    // Super admins can read and write all admin records.
+    // Individual admins can read their own record to verify their permissions.
+    match /admins/{adminId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == adminId);
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Content Collection (Jobs, Admit Cards, Results, Answer Keys, Syllabus, Articles)
+    // Public can read only published content.
+    // Active editors and super admins can read drafts and write content.
+    match /content/{contentId} {
+      allow read: if (resource != null && resource.data.isPublished == true && resource.data.status != 'archived')
+                  || isEditorOrAbove();
+      allow create, update: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Categories Collection
+    // Public can read active categories.
+    // Active editors and super admins can manage categories.
+    match /categories/{categoryId} {
+      allow read: if (resource != null && resource.data.isActive == true) || isEditorOrAbove();
+      allow create, update: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Homepage Sections Collection
+    // Public can read enabled sections.
+    // Active editors and super admins can manage layout.
+    match /homepage_sections/{sectionId} {
+      allow read: if (resource != null && resource.data.enabled == true) || isEditorOrAbove();
+      allow write: if isEditorOrAbove();
+    }
+
+    // App Settings
+    // Public can read general app settings (social links, version flags, rewarded ads toggle).
+    // Editors and Super Admins can update app settings.
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Push Notifications
+    // Public cannot read notification drafts or trigger notifications.
+    // Editors and super admins can view logs and queue notifications.
+    match /notifications/{notificationId} {
+      allow read: if isEditorOrAbove();
+      allow write: if isEditorOrAbove();
+    }
+
+    match /notification_logs/{logId} {
+      allow read: if isEditorOrAbove();
+      // Written by Cloudflare Worker or backend service
+      allow write: if isEditorOrAbove();
+    }
+
+    // User Feedback & Reports (Public submission only)
+    match /reports/{reportId} {
+      allow create: if true;
+      allow read, update, delete: if isEditorOrAbove();
+    }
+
+    match /feedback/{feedbackId} {
+      allow create: if true;
+      allow read, update, delete: if isEditorOrAbove();
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
