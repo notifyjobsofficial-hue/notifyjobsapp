@@ -41,22 +41,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         const adminData = adminDocSnap.data();
         if (adminData?.active !== true) {
           await auth.signOut();
-          setError('Your administrator account has been deactivated. Please contact the project owner.');
+          setError('Your administrator account is disabled.');
+          setLoading(false);
+          return;
+        }
+
+        const role = adminData?.role;
+        if (role !== 'super_admin' && role !== 'editor') {
+          await auth.signOut();
+          setError('You do not have permission to access the Notify Jobs Admin Portal.');
           setLoading(false);
           return;
         }
 
         onLoginSuccess({
           email: user.email || email.trim(),
-          role: adminData.role || 'super_admin',
+          role: role,
           uid: user.uid,
         });
       } else {
         // Authenticated in Firebase Auth, but not provisioned in /admins/{uid}
         await auth.signOut();
-        setError(
-          'Your account is authenticated, but is not authorized as an administrator for Notify Jobs. If you are setting up the project, please run the super-admin bootstrap script.'
-        );
+        setError('This account is not registered as a Notify Jobs administrator.');
         setLoading(false);
         return;
       }
@@ -70,17 +76,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         code === 'auth/user-not-found' ||
         code === 'auth/invalid-email'
       ) {
-        setError('Invalid email or password. Please check your credentials and try again.');
+        setError('Invalid email or password.');
       } else if (code === 'auth/user-disabled') {
-        setError('This account has been disabled. Please contact the administrator.');
-      } else if (code === 'auth/too-many-requests') {
-        setError('Too many unsuccessful login attempts. Please wait a few moments and try again.');
+        setError('Your administrator account is disabled.');
       } else if (code === 'auth/network-request-failed') {
-        setError('Network connection error. Please check your internet connection and try again.');
+        setError('Unable to connect. Check your internet connection and try again.');
+      } else if (code === 'unavailable' || code === 'auth/internal-error' || code === 'resource-exhausted') {
+        setError('Service is temporarily unavailable. Please try again.');
       } else if (code === 'permission-denied' || String(err?.message || '').toLowerCase().includes('permission')) {
-        setError('Access denied: This account lacks administrator authorization in Firestore.');
+        setError('This account is not registered as a Notify Jobs administrator.');
       } else {
-        setError('Login failed. Please check your credentials or contact the administrator.');
+        setError('Invalid email or password.');
       }
     } finally {
       setLoading(false);
@@ -105,7 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-xl shadow-slate-200/50 rounded-3xl border border-slate-200/80 sm:px-10">
-          <form className="space-y-4" onSubmit={handleLogin}>
+          <form className="space-y-4" onSubmit={handleLogin} autoComplete="off">
             {error && (
               <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" />
@@ -117,7 +123,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               label="Admin Email"
               type="email"
               required
-              placeholder="admin@example.com"
+              autoComplete="off"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<Mail className="w-4 h-4" />}
@@ -127,7 +133,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               label="Password"
               type="password"
               required
-              placeholder="••••••••••••"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               icon={<Lock className="w-4 h-4" />}
