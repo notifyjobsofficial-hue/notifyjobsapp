@@ -7,23 +7,23 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../firebase/config';
+import { db, auth } from '../firebase/config';
 import { Category } from '../types';
 
 const COLLECTION_NAME = 'categories';
 
 let memoryCategories: Category[] = [
-  { id: 'latest-jobs', name: 'Latest Jobs', slug: 'latest-jobs', icon: 'Briefcase', color: '#159B76', order: 1, isActive: true },
-  { id: 'andaman-nicobar', name: 'Andaman & Nicobar Jobs', slug: 'andaman-nicobar', icon: 'MapPin', color: '#0D9488', order: 2, isActive: true },
-  { id: 'ssc', name: 'SSC Jobs', slug: 'ssc', icon: 'Landmark', color: '#2563EB', order: 3, isActive: true },
-  { id: 'railway', name: 'Railway Jobs', slug: 'railway', icon: 'Train', color: '#DC2626', order: 4, isActive: true },
-  { id: 'banking', name: 'Banking Jobs', slug: 'banking', icon: 'Banknote', color: '#059669', order: 5, isActive: true },
-  { id: 'police-defence', name: 'Police / Defence', slug: 'police-defence', icon: 'Shield', color: '#D97706', order: 6, isActive: true },
-  { id: 'admit-cards', name: 'Admit Cards', slug: 'admit-cards', icon: 'FileText', color: '#7C3AED', order: 7, isActive: true },
-  { id: 'results', name: 'Results', slug: 'results', icon: 'Award', color: '#EA580C', order: 8, isActive: true },
-  { id: 'answer-keys', name: 'Answer Keys', slug: 'answer-keys', icon: 'CheckSquare', color: '#0284C7', order: 9, isActive: true },
-  { id: 'syllabus', name: 'Syllabus', slug: 'syllabus', icon: 'BookOpen', color: '#475569', order: 10, isActive: true },
-  { id: 'articles', name: 'Latest Articles', slug: 'articles', icon: 'Newspaper', color: '#64748B', order: 11, isActive: true },
+  { id: 'latest-jobs', name: 'Latest Jobs', shortName: 'Latest', slug: 'latest-jobs', icon: 'Briefcase', color: '#159B76', order: 1, isActive: true, showOnHome: true, destination: '/jobs?category=latest-jobs', contentScope: 'job' },
+  { id: 'andaman-nicobar', name: 'Andaman & Nicobar Jobs', shortName: 'A&N Jobs', slug: 'andaman-nicobar', icon: 'MapPin', color: '#0D9488', order: 2, isActive: true, showOnHome: true, destination: '/jobs?category=andaman-nicobar', contentScope: 'job' },
+  { id: 'ssc', name: 'SSC Jobs', shortName: 'SSC', slug: 'ssc', icon: 'Landmark', color: '#2563EB', order: 3, isActive: true, showOnHome: true, destination: '/jobs?category=ssc', contentScope: 'job' },
+  { id: 'railway', name: 'Railway Jobs', shortName: 'Railway', slug: 'railway', icon: 'Train', color: '#DC2626', order: 4, isActive: true, showOnHome: true, destination: '/jobs?category=railway', contentScope: 'job' },
+  { id: 'banking', name: 'Banking Jobs', shortName: 'Banking', slug: 'banking', icon: 'Banknote', color: '#059669', order: 5, isActive: true, showOnHome: true, destination: '/jobs?category=banking', contentScope: 'job' },
+  { id: 'police-defence', name: 'Police / Defence', shortName: 'Defence', slug: 'police-defence', icon: 'Shield', color: '#D97706', order: 6, isActive: true, showOnHome: true, destination: '/jobs?category=police-defence', contentScope: 'job' },
+  { id: 'admit-cards', name: 'Admit Cards', shortName: 'Admit Card', slug: 'admit-cards', icon: 'FileText', color: '#7C3AED', order: 7, isActive: true, showOnHome: true, destination: '/updates?tab=admit_cards', contentScope: 'update' },
+  { id: 'results', name: 'Results', shortName: 'Result', slug: 'results', icon: 'Award', color: '#EA580C', order: 8, isActive: true, showOnHome: true, destination: '/updates?tab=results', contentScope: 'update' },
+  { id: 'answer-keys', name: 'Answer Keys', shortName: 'Ans Key', slug: 'answer-keys', icon: 'CheckSquare', color: '#0284C7', order: 9, isActive: true, showOnHome: true, destination: '/updates?tab=answer_keys', contentScope: 'update' },
+  { id: 'syllabus', name: 'Syllabus', shortName: 'Syllabus', slug: 'syllabus', icon: 'BookOpen', color: '#475569', order: 10, isActive: true, showOnHome: true, destination: '/updates?tab=syllabus', contentScope: 'update' },
+  { id: 'articles', name: 'Latest Articles', shortName: 'Articles', slug: 'articles', icon: 'Newspaper', color: '#64748B', order: 11, isActive: true, showOnHome: true, destination: '/more', contentScope: 'article' },
 ];
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -32,7 +32,20 @@ export async function fetchCategories(): Promise<Category[]> {
     const snap = await getDocs(q);
     const list: Category[] = [];
     snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Category));
-    return list.length > 0 ? list : memoryCategories;
+    
+    if (list.length > 0) {
+      memoryCategories = list;
+      return list;
+    }
+
+    // Auto-seed to Firestore if empty and admin is authenticated
+    if (auth.currentUser) {
+      console.log('Auto-seeding default categories to Firestore...');
+      for (const cat of memoryCategories) {
+        await setDoc(doc(db, COLLECTION_NAME, cat.id), cat, { merge: true });
+      }
+    }
+    return memoryCategories;
   } catch (err) {
     console.error('Error loading categories from Firestore:', err);
     return memoryCategories;
@@ -44,11 +57,15 @@ export async function saveCategory(category: Partial<Category>): Promise<void> {
   const payload: Category = {
     id,
     name: category.name || '',
+    shortName: category.shortName || category.name || '',
     slug: category.slug || id,
     icon: category.icon || 'Briefcase',
     color: category.color || '#159B76',
-    order: category.order || 99,
+    order: Number(category.order) || 99,
     isActive: category.isActive ?? true,
+    showOnHome: category.showOnHome ?? true,
+    destination: category.destination || '',
+    contentScope: category.contentScope || 'job',
   };
 
   try {
@@ -61,6 +78,7 @@ export async function saveCategory(category: Partial<Category>): Promise<void> {
     const idx = memoryCategories.findIndex((c) => c.id === id);
     if (idx >= 0) memoryCategories[idx] = payload;
     else memoryCategories.push(payload);
+    throw err;
   }
 }
 
@@ -70,5 +88,6 @@ export async function deleteCategory(id: string): Promise<void> {
     memoryCategories = memoryCategories.filter((c) => c.id !== id);
   } catch (err) {
     console.error('Error deleting category from Firestore:', err);
+    throw err;
   }
 }

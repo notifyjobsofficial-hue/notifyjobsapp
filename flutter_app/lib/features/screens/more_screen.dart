@@ -6,19 +6,63 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../core/widgets/nj_card.dart';
+import '../../core/widgets/nj_support_us_sheet.dart';
 import '../providers/app_settings_provider.dart';
 
-/// More / Hub Screen inspired by Maths Yoddha benchmark (Specification 33, 34, 155, 156)
+/// More / Settings Screen cleanly structured with exactly 5 sections (Specification Part 6)
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   Future<void> _launchExternalUrl(String url) async {
-    if (url.isEmpty) return;
+    if (url.trim().isEmpty) return;
     try {
-      final uri = Uri.parse(url);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
     } catch (_) {}
+  }
+
+  void _showDisclaimerDialog(BuildContext context, dynamic settings) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Official Disclaimer'),
+        content: Text(
+          settings.disclaimer.isNotEmpty
+              ? settings.disclaimer
+              : 'Notify Jobs is an independent information service and is NOT affiliated with, authorized, endorsed by, or in any way officially connected with any government agency or entity. All job notifications and exam updates are gathered from publicly accessible official sources.',
+          style: AppTypography.body.copyWith(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context, dynamic settings) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('About Notify Jobs'),
+        content: Text(
+          'Notify Jobs is a standalone, aspirant-focused mobile application built to provide instantaneous alerts for Indian government jobs, exam results, admit cards, and answer keys.\n\nAll official links open directly to authorized recruitment portals.',
+          style: AppTypography.body.copyWith(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -27,6 +71,10 @@ class MoreScreen extends ConsumerWidget {
     final settings = ref.watch(appSettingsProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('More'),
+        centerTitle: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -34,228 +82,156 @@ class MoreScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header Card (Maths Yoddha Inspired Solid Green Card)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryDark,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryDark.withOpacity(0.3),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome Aspirant',
-                            style: AppTypography.caption.copyWith(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'NOTIFY JOBS',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            settings.tagline,
-                            style: AppTypography.caption.copyWith(
-                              color: Colors.white.withOpacity(0.85),
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              // SECTION 1: NOTIFICATIONS
+              _buildSectionHeader('NOTIFICATIONS', isDark),
+              const SizedBox(height: 10),
+              NjCard(
+                padding: EdgeInsets.zero,
+                child: _buildListTile(
+                  icon: Icons.notifications_active_outlined,
+                  title: 'Notification Settings',
+                  subtitle: 'Manage alert categories and sound preferences',
+                  onTap: () => context.push('/notification-preferences'),
+                  isDark: isDark,
                 ),
               ),
+              const SizedBox(height: 22),
 
-              const SizedBox(height: 24),
-
-              // 2. Section: Social Channels (| Join Us) (Admin Feature Flag)
-              if (settings.socialSectionEnabled) ...[
-                _buildSectionHeader('| Join Us', isDark),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // WhatsApp
-                    if (settings.whatsappEnabled &&
-                        settings.whatsappUrl.isNotEmpty)
-                      Expanded(
-                        child: _buildSocialTile(
-                          label: 'WhatsApp',
-                          icon: Icons.chat_bubble_rounded,
-                          iconColor: const Color(0xFF16A34A),
-                          bgColor: const Color(0xFFDCFCE7),
-                          onTap: () => _launchExternalUrl(settings.whatsappUrl),
-                          isDark: isDark,
-                        ),
-                      ),
-                    if (settings.whatsappEnabled &&
-                        settings.telegramEnabled &&
-                        settings.telegramUrl.isNotEmpty)
-                      const SizedBox(width: 12),
-                    // Telegram
-                    if (settings.telegramEnabled &&
-                        settings.telegramUrl.isNotEmpty)
-                      Expanded(
-                        child: _buildSocialTile(
-                          label: 'Telegram',
-                          icon: Icons.send_rounded,
-                          iconColor: const Color(0xFF0284C7),
-                          bgColor: const Color(0xFFE0F2FE),
-                          onTap: () => _launchExternalUrl(settings.telegramUrl),
-                          isDark: isDark,
-                        ),
-                      ),
-                  ],
+              // SECTION 2: APPEARANCE
+              _buildSectionHeader('APPEARANCE', isDark),
+              const SizedBox(height: 10),
+              NjCard(
+                padding: EdgeInsets.zero,
+                child: _buildSwitchTile(
+                  icon: isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  title: 'Dark Mode',
+                  subtitle:
+                      isDark ? 'Dark theme is active' : 'Light theme is active',
+                  value: isDark,
+                  onChanged: (val) {
+                    HapticFeedback.selectionClick();
+                    ref.read(themeModeProvider.notifier).toggleTheme();
+                  },
+                  isDark: isDark,
                 ),
-                if (settings.youtubeEnabled &&
-                    settings.youtubeUrl.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSocialTile(
-                          label: 'YouTube',
-                          icon: Icons.play_arrow_rounded,
-                          iconColor: const Color(0xFFDC2626),
-                          bgColor: const Color(0xFFFEE2E2),
-                          onTap: () => _launchExternalUrl(settings.youtubeUrl),
-                          isDark: isDark,
-                        ),
-                      ),
-                      if (settings.instagramEnabled &&
-                          settings.instagramUrl.isNotEmpty) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildSocialTile(
-                            label: 'Instagram',
-                            icon: Icons.camera_alt_rounded,
-                            iconColor: const Color(0xFFDB2777),
-                            bgColor: const Color(0xFFFCE7F3),
-                            onTap: () =>
-                                _launchExternalUrl(settings.instagramUrl),
-                            isDark: isDark,
-                          ),
-                        ),
-                      ],
-                    ],
+              ),
+              const SizedBox(height: 22),
+
+              // SECTION 3: COMMUNITY
+              _buildSectionHeader('COMMUNITY', isDark),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSocialTile(
+                      label: 'Join WhatsApp',
+                      icon: Icons.chat_bubble_rounded,
+                      iconColor: const Color(0xFF16A34A),
+                      bgColor: const Color(0xFFDCFCE7),
+                      onTap: () {
+                        final url = settings.whatsappUrl.isNotEmpty
+                            ? settings.whatsappUrl
+                            : 'https://whatsapp.com';
+                        _launchExternalUrl(url);
+                      },
+                      isDark: isDark,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSocialTile(
+                      label: 'Join Telegram',
+                      icon: Icons.send_rounded,
+                      iconColor: const Color(0xFF0284C7),
+                      bgColor: const Color(0xFFE0F2FE),
+                      onTap: () {
+                        final url = settings.telegramUrl.isNotEmpty
+                            ? settings.telegramUrl
+                            : 'https://telegram.me';
+                        _launchExternalUrl(url);
+                      },
+                      isDark: isDark,
+                    ),
                   ),
                 ],
-                const SizedBox(height: 24),
-              ],
+              ),
+              const SizedBox(height: 22),
 
-              // 3. Section: Preferences & Support (| Help & Support)
-              _buildSectionHeader('| Preferences & Support', isDark),
-              const SizedBox(height: 12),
+              // SECTION 4: SUPPORT NOTIFY JOBS
+              _buildSectionHeader('SUPPORT NOTIFY JOBS', isDark),
+              const SizedBox(height: 10),
               NjCard(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    if (settings.notificationPreferencesEnabled) ...[
-                      _buildListTile(
-                        icon: Icons.notifications_active_outlined,
-                        title: 'Notification Preferences',
-                        subtitle: 'Choose recruitment alert topics',
-                        onTap: () => context.push('/notifications'),
-                        isDark: isDark,
-                      ),
-                      const Divider(height: 1),
-                    ],
-                    if (settings.supportPageEnabled) ...[
-                      _buildListTile(
-                        icon: Icons.headset_mic_outlined,
-                        title: 'Help & Support',
-                        subtitle: 'Email, WhatsApp & report wrong info',
-                        onTap: () => context.push('/support'),
-                        isDark: isDark,
-                      ),
-                      const Divider(height: 1),
-                    ],
+                    _buildListTile(
+                      icon: Icons.favorite_rounded,
+                      title: 'Support Us',
+                      subtitle: 'Share the app, rate us, or send feedback',
+                      iconColor: const Color(0xFFDC2626),
+                      onTap: () => NjSupportUsSheet.show(context, settings),
+                      isDark: isDark,
+                    ),
+                    const Divider(height: 1),
                     _buildListTile(
                       icon: Icons.share_outlined,
-                      title: 'Share Notify Jobs App',
-                      subtitle: 'Share with friends & study groups',
+                      title: 'Share App',
+                      subtitle: 'Share Notify Jobs with fellow aspirants',
                       onTap: () {
+                        final url = settings.playStoreUrl.isNotEmpty
+                            ? settings.playStoreUrl
+                            : 'https://play.google.com/store/apps/details?id=com.notifyjobs.app';
                         Share.share(
-                          'Download Notify Jobs App for latest Government Jobs, Admit Cards and Results: ${settings.playStoreUrl}',
+                          'Download Notify Jobs App for Instant Sarkari Alerts, Admit Cards, and Results: $url',
+                          subject: 'Notify Jobs App',
                         );
                       },
                       isDark: isDark,
                     ),
-                    if (settings.playStoreUrl.isNotEmpty) ...[
-                      const Divider(height: 1),
-                      _buildListTile(
-                        icon: Icons.star_outline_rounded,
-                        title: 'Rate App on Play Store',
-                        subtitle: 'Leave a 5-star review',
-                        onTap: () => _launchExternalUrl(settings.playStoreUrl),
-                        isDark: isDark,
-                      ),
-                    ],
+                    const Divider(height: 1),
+                    _buildListTile(
+                      icon: Icons.star_outline_rounded,
+                      title: 'Rate App',
+                      subtitle: 'Rate us 5 stars on Google Play Store',
+                      onTap: () {
+                        final url = settings.playStoreUrl.isNotEmpty
+                            ? settings.playStoreUrl
+                            : 'https://play.google.com/store/apps/details?id=com.notifyjobs.app';
+                        _launchExternalUrl(url);
+                      },
+                      isDark: isDark,
+                    ),
+                    const Divider(height: 1),
+                    _buildListTile(
+                      icon: Icons.report_problem_outlined,
+                      title: 'Report a Problem',
+                      subtitle:
+                          'Report incorrect details, broken links or bugs',
+                      onTap: () => context.push('/support'),
+                      isDark: isDark,
+                    ),
+                    const Divider(height: 1),
+                    _buildListTile(
+                      icon: Icons.mail_outline_rounded,
+                      title: 'Contact Us',
+                      subtitle: 'Get in touch with the Notify Jobs team',
+                      onTap: () => context.push('/support'),
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(height: 22),
 
-              const SizedBox(height: 24),
-
-              // 4. Section: Legal & Policies
-              _buildSectionHeader('| Information & Policies', isDark),
-              const SizedBox(height: 12),
+              // SECTION 5: LEGAL
+              _buildSectionHeader('LEGAL', isDark),
+              const SizedBox(height: 10),
               NjCard(
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _buildListTile(
-                      icon: Icons.info_outline_rounded,
-                      title: 'About Notify Jobs',
-                      subtitle: 'Fast, independent exam alert platform',
-                      onTap: () => _showAboutDialog(context, settings),
-                      isDark: isDark,
-                    ),
-                    const Divider(height: 1),
-                    _buildListTile(
-                      icon: Icons.gavel_outlined,
-                      title: 'Disclaimer',
-                      subtitle: 'Independent notification portal',
-                      onTap: () => _showDisclaimerDialog(context, settings),
-                      isDark: isDark,
-                    ),
-                    const Divider(height: 1),
                     _buildListTile(
                       icon: Icons.privacy_tip_outlined,
                       title: 'Privacy Policy',
@@ -266,33 +242,53 @@ class MoreScreen extends ConsumerWidget {
                     const Divider(height: 1),
                     _buildListTile(
                       icon: Icons.description_outlined,
-                      title: 'Terms of Service',
-                      subtitle: 'Usage guidelines',
+                      title: 'Terms & Conditions',
+                      subtitle: 'Application usage guidelines',
                       onTap: () => _launchExternalUrl(settings.termsUrl),
+                      isDark: isDark,
+                    ),
+                    const Divider(height: 1),
+                    _buildListTile(
+                      icon: Icons.gavel_outlined,
+                      title: 'Disclaimer',
+                      subtitle: 'Independent notification portal declaration',
+                      onTap: () => _showDisclaimerDialog(context, settings),
+                      isDark: isDark,
+                    ),
+                    const Divider(height: 1),
+                    _buildListTile(
+                      icon: Icons.info_outline_rounded,
+                      title: 'About Notify Jobs',
+                      subtitle: 'Independent exam & job alert platform',
+                      onTap: () => _showAboutDialog(context, settings),
                       isDark: isDark,
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
 
-              // Version Info
+              // App Version Footer
               Center(
                 child: Column(
                   children: [
                     Text(
-                      'Notify Jobs v${settings.latestAppVersion} (Build 1)',
+                      'Notify Jobs v1.1',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.muted,
-                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.muted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      'Made with ❤️ for Indian Aspirants',
+                      'Fast, Free & Independent Sarkari Alerts',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.muted,
+                        color: isDark
+                            ? AppColors.darkTextSecondary.withOpacity(0.7)
+                            : AppColors.muted,
                         fontSize: 11,
                       ),
                     ),
@@ -310,7 +306,7 @@ class MoreScreen extends ConsumerWidget {
     return Row(
       children: [
         Container(
-          width: 3,
+          width: 3.5,
           height: 16,
           decoration: BoxDecoration(
             color: AppColors.primary,
@@ -319,9 +315,10 @@ class MoreScreen extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          title.replaceFirst('| ', ''),
+          title,
           style: AppTypography.sectionHeading.copyWith(
-            fontSize: 15,
+            fontSize: 13,
+            letterSpacing: 0.8,
             color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
           ),
         ),
@@ -342,25 +339,30 @@ class MoreScreen extends ConsumerWidget {
         HapticFeedback.selectionClick();
         onTap();
       },
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: bgColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: AppTypography.button.copyWith(
-              fontSize: 13,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTypography.button.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -374,6 +376,7 @@ class MoreScreen extends ConsumerWidget {
     required String subtitle,
     required VoidCallback onTap,
     required bool isDark,
+    Color? iconColor,
   }) {
     return ListTile(
       onTap: () {
@@ -388,9 +391,12 @@ class MoreScreen extends ConsumerWidget {
               isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon,
-            size: 20,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.navy),
+        child: Icon(
+          icon,
+          size: 20,
+          color: iconColor ??
+              (isDark ? AppColors.darkTextPrimary : AppColors.navy),
+        ),
       ),
       title: Text(
         title,
@@ -410,40 +416,46 @@ class MoreScreen extends ConsumerWidget {
     );
   }
 
-  void _showDisclaimerDialog(BuildContext context, dynamic settings) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Official Disclaimer'),
-        content: Text(
-          settings.disclaimer,
-          style: AppTypography.body.copyWith(fontSize: 13),
+  Widget _buildSwitchTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required bool isDark,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color:
+              isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Understood'),
-          ),
-        ],
+        child: Icon(
+          icon,
+          size: 20,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+        ),
       ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context, dynamic settings) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(settings.appTitle),
-        content: Text(
-          'Notify Jobs is a standalone, aspirant-focused mobile application built to provide instantaneous alerts for Indian government jobs, exam results, admit cards, and answer keys.\n\nAll official links open directly to authorized recruitment portals.',
-          style: AppTypography.body.copyWith(fontSize: 13),
+      title: Text(
+        title,
+        style: AppTypography.cardTitle.copyWith(
+          fontSize: 14,
+          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
+      ),
+      subtitle: Text(
+        subtitle,
+        style: AppTypography.caption.copyWith(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.muted,
+        ),
+      ),
+      trailing: Switch.adaptive(
+        value: value,
+        onChanged: onChanged,
+        activeColor: AppColors.primary,
       ),
     );
   }

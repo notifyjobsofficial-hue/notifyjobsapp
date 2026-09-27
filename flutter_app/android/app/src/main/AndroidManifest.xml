@@ -12,16 +12,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="false">
 
-        <!-- Google AdMob App ID (Development uses official Google test App ID) -->
-        <!-- Replace with ADMOB_APP_ID before Google Play Store release -->
+        <!-- Google AdMob App ID (Debug uses official Google test ID; Release uses production ID) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="${admobAppId}"/>
 
-        <!-- Default Notification Channel metadata -->
+        <!-- Default Notification Channel and Icon metadata -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="notify_jobs_channel"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
 
         <activity
             android:name=".MainActivity"

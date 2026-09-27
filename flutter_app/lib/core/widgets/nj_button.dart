@@ -159,11 +159,15 @@ class _NjButtonState extends State<NjButton>
           iconWidget,
           const SizedBox(width: 8),
         ],
-        Text(
-          widget.label,
-          style: AppTypography.button.copyWith(
-            fontSize: fontSize,
-            color: textColor,
+        Flexible(
+          child: Text(
+            widget.label,
+            style: AppTypography.button.copyWith(
+              fontSize: fontSize,
+              color: textColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

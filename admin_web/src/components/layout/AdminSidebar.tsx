@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrandLogo } from '../common/BrandLogo';
 import {
   LayoutDashboard,
   FileText,
@@ -48,6 +49,7 @@ export type NavView =
   | 'articles_all'
   // Settings & Management
   | 'categories'
+  | 'job_types'
   | 'homepage'
   | 'notifications'
   | 'social_support'
@@ -192,9 +194,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Brand Header */}
         <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('dashboard')}>
-            <div className="w-9 h-9 rounded-xl bg-[#159B76] flex items-center justify-center text-white font-bold shadow-md shadow-[#159B76]/20">
-              NJ
-            </div>
+            <BrandLogo className="w-9 h-9" />
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight">
                 Notify Jobs
@@ -471,6 +471,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             >
               <Layers className={`w-4 h-4 ${currentView === 'categories' ? 'text-white' : 'text-slate-400'}`} />
               <span>Categories</span>
+            </button>
+
+            <button
+              onClick={() => {
+                onNavigate('job_types');
+                onClose();
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                currentView === 'job_types'
+                  ? 'bg-[#159B76] text-white font-semibold shadow-sm shadow-[#159B76]/25'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Briefcase className={`w-4 h-4 ${currentView === 'job_types' ? 'text-white' : 'text-slate-400'}`} />
+              <span>Job Types</span>
             </button>
 
             <button

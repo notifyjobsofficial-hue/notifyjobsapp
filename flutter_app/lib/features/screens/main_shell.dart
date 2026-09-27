@@ -6,11 +6,15 @@ import '../../core/theme/app_typography.dart';
 
 /// Master 5-Destination Bottom Navigation Shell (Specification 17)
 class MainShell extends StatelessWidget {
-  final Widget child;
+  final StatefulNavigationShell? navigationShell;
+  final Widget? child;
 
-  const MainShell({super.key, required this.child});
+  const MainShell({super.key, this.navigationShell, this.child});
 
   int _calculateSelectedIndex(BuildContext context) {
+    if (navigationShell != null) {
+      return navigationShell!.currentIndex;
+    }
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/jobs')) return 1;
     if (location.startsWith('/updates')) return 2;
@@ -21,6 +25,13 @@ class MainShell extends StatelessWidget {
 
   void _onItemTapped(int index, BuildContext context) {
     HapticFeedback.selectionClick();
+    if (navigationShell != null) {
+      navigationShell!.goBranch(
+        index,
+        initialLocation: index == navigationShell!.currentIndex,
+      );
+      return;
+    }
     switch (index) {
       case 0:
         context.go('/');
@@ -57,8 +68,8 @@ class MainShell extends StatelessWidget {
         label: 'Jobs'
       ),
       (
-        icon: Icons.bolt_outlined,
-        activeIcon: Icons.bolt_rounded,
+        icon: Icons.campaign_outlined,
+        activeIcon: Icons.campaign_rounded,
         label: 'Updates'
       ),
       (
@@ -74,7 +85,7 @@ class MainShell extends StatelessWidget {
     ];
 
     return Scaffold(
-      body: child,
+      body: navigationShell ?? child ?? const SizedBox.shrink(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : Colors.white,
@@ -107,15 +118,16 @@ class MainShell extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
+                    constraints: const BoxConstraints(minHeight: 44),
                     padding: EdgeInsets.symmetric(
-                      horizontal: isSelected ? 16 : 12,
+                      horizontal: isSelected ? 12 : 8,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                              ? AppColors.primary.withOpacity(0.2)
-                              : AppColors.softGreen)
+                              ? AppColors.secondary.withOpacity(0.2)
+                              : AppColors.secondarySoft)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(100),
                     ),
@@ -124,9 +136,11 @@ class MainShell extends StatelessWidget {
                       children: [
                         Icon(
                           isSelected ? item.activeIcon : item.icon,
-                          size: 22,
+                          size: 21,
                           color: isSelected
-                              ? AppColors.primary
+                              ? (isDark
+                                  ? const Color(0xFF93C5FD)
+                                  : AppColors.secondary)
                               : (isDark
                                   ? AppColors.darkTextSecondary
                                   : AppColors.muted),
@@ -135,10 +149,14 @@ class MainShell extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTypography.button.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: isDark
+                                  ? const Color(0xFF93C5FD)
+                                  : AppColors.secondary,
                             ),
                           ),
                         ],

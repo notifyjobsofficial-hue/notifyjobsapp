@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../models/content_model.dart';
 import '../providers/content_providers.dart';
 import '../providers/storage_provider.dart';
@@ -8,8 +9,6 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/nj_empty_state.dart';
 import '../../core/widgets/nj_job_card.dart';
 import '../../core/widgets/nj_update_card.dart';
-import 'article_detail_screen.dart';
-import 'job_detail_screen.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -23,15 +22,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String _selectedCategory = 'all';
   List<String> _recentSearches = [];
 
+  static const List<String> _popularQueries = [
+    'SSC',
+    'Railway',
+    'Andaman Police',
+    '10th Pass',
+    '12th Pass',
+    'Graduate',
+    'Admit Card',
+    'Result',
+  ];
+
   final List<Map<String, String>> _categories = const [
     {'id': 'all', 'label': 'All'},
-    {'id': 'latest_jobs', 'label': 'Latest Jobs'},
+    {'id': 'government_job', 'label': 'Govt Jobs'},
     {'id': 'andaman_job', 'label': 'A&N Jobs'},
     {'id': 'private_job', 'label': 'Private Jobs'},
     {'id': 'admit_card', 'label': 'Admit Cards'},
-    {'id': 'results', 'label': 'Results'},
+    {'id': 'result', 'label': 'Results'},
     {'id': 'answer_key', 'label': 'Answer Keys'},
-    {'id': 'admission', 'label': 'Admissions'},
     {'id': 'syllabus', 'label': 'Syllabus'},
   ];
 
@@ -75,34 +84,84 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final queryText = _controller.text.trim();
     final results = ref.watch(searchContentProvider(queryText));
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: 'Search jobs, department, admit card...',
-            hintStyle: AppTypography.bodyMedium
-                .copyWith(color: AppColors.textDisabled),
-            border: InputBorder.none,
-            isDense: true,
-            suffixIcon: _controller.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear_rounded, size: 20),
-                    onPressed: () {
+        title: Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceElevated
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                width: 0.8,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.search_rounded,
+                  size: 19,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.secondaryText,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    textInputAction: TextInputAction.search,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color:
+                          isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search jobs, admit cards, results...',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.muted,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (val) => setState(() {}),
+                    onSubmitted: _onSearchSubmitted,
+                  ),
+                ),
+                if (_controller.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
                       _controller.clear();
                       setState(() {});
                     },
-                  )
-                : null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.cancel_rounded,
+                        size: 16,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.muted,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          onChanged: (val) => setState(() {}),
-          onSubmitted: _onSearchSubmitted,
         ),
       ),
       body: Column(
@@ -119,19 +178,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: FilterChip(
                     label: Text(cat['label']!),
                     selected: isSelected,
-                    selectedColor: AppColors.primarySubtle,
-                    checkmarkColor: AppColors.primary,
-                    labelStyle: AppTypography.labelMedium.copyWith(
+                    selectedColor: isDark
+                        ? AppColors.royalBlue.withOpacity(0.25)
+                        : const Color(0xFFEFF6FF),
+                    checkmarkColor: AppColors.royalBlue,
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
-                          ? AppColors.primaryDark
-                          : AppColors.textSecondary,
+                          ? AppColors.royalBlue
+                          : (isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.secondaryText),
                     ),
-                    backgroundColor: AppColors.surface,
+                    backgroundColor:
+                        isDark ? AppColors.darkSurface : Colors.white,
                     side: BorderSide(
-                      color: isSelected ? AppColors.primary : AppColors.border,
+                      color: isSelected
+                          ? AppColors.royalBlue
+                          : (isDark ? AppColors.darkBorder : AppColors.border),
                     ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                     onSelected: (selected) {
                       setState(() {
                         _selectedCategory = cat['id']!;
@@ -147,7 +217,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           // Content Area
           Expanded(
             child: queryText.isEmpty
-                ? _buildRecentSearchesView()
+                ? _buildRecentAndPopularSearches(isDark)
                 : _buildSearchResultsView(results),
           ),
         ],
@@ -155,41 +225,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildRecentSearchesView() {
-    if (_recentSearches.isEmpty) {
-      return const NjEmptyState(
-        icon: Icons.search_rounded,
-        title: 'Search Opportunities',
-        message: 'Type an exam name, department, or post to find updates.',
-      );
-    }
-
+  Widget _buildRecentAndPopularSearches(bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Popular Searches Section
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Recent Searches', style: AppTypography.titleSmall),
-            TextButton(
-              onPressed: _clearAllSearches,
-              child: Text(
-                'Clear All',
-                style: AppTypography.captionMedium
-                    .copyWith(color: AppColors.error),
+            const Icon(Icons.trending_up_rounded,
+                size: 17, color: AppColors.royalBlue),
+            const SizedBox(width: 6),
+            Text(
+              'Popular Searches',
+              style: AppTypography.titleSmall.copyWith(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _recentSearches.map((query) {
-            return InputChip(
-              label: Text(query, style: AppTypography.bodySmall),
-              deleteIcon: const Icon(Icons.close_rounded, size: 16),
-              onDeleted: () => _removeSearch(query),
+          children: _popularQueries.map((query) {
+            return ActionChip(
+              label: Text(query),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+              ),
+              backgroundColor: isDark
+                  ? AppColors.darkSurfaceElevated
+                  : const Color(0xFFF1F5F9),
+              side: BorderSide(
+                color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               onPressed: () {
                 _controller.text = query;
                 setState(() {});
@@ -198,6 +274,66 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 24),
+
+        // Recent Searches Section
+        if (_recentSearches.isNotEmpty) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.history_rounded,
+                      size: 17, color: AppColors.muted),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Recent Searches',
+                    style: AppTypography.titleSmall.copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: _clearAllSearches,
+                child: Text(
+                  'Clear All',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _recentSearches.map((query) {
+              return InputChip(
+                label: Text(query),
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                ),
+                backgroundColor:
+                    isDark ? AppColors.darkSurface : const Color(0xFFF8FAFC),
+                deleteIcon: const Icon(Icons.close_rounded, size: 15),
+                onDeleted: () => _removeSearch(query),
+                onPressed: () {
+                  _controller.text = query;
+                  setState(() {});
+                  _onSearchSubmitted(query);
+                },
+              );
+            }).toList(),
+          ),
+        ],
       ],
     );
   }
@@ -224,21 +360,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: filtered.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = filtered[index];
-        if (item.contentType == 'government_job' ||
-            item.contentType == 'latest_jobs' ||
-            item.contentType == 'andaman_job' ||
-            item.contentType == 'private_job') {
+        if (item.isJob) {
           return NjJobCard(
             job: item,
             onTap: () {
               _onSearchSubmitted(_controller.text.trim());
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => JobDetailScreen(id: item.id)),
-              );
+              context.push('/job/${item.id}');
             },
           );
         } else {
@@ -246,11 +376,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             item: item,
             onTap: () {
               _onSearchSubmitted(_controller.text.trim());
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => ArticleDetailScreen(id: item.id)),
-              );
+              context.push('/update/${item.id}');
             },
           );
         }

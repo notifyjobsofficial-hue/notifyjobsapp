@@ -8,9 +8,9 @@ class AdMobConfig {
   static const String testRewardedAdUnitId =
       'ca-app-pub-3940256099942544/5224354917';
 
-  /// Production Placeholders to be populated before Google Play Store release
+  /// Production Rewarded Ad Unit ID for Release builds
   static const String productionRewardedAdUnitId =
-      'REWARDED_NOTIFICATION_AD_UNIT_ID';
+      'ca-app-pub-2250115842376248/4291317920';
 
   /// Returns the appropriate ad unit ID based on environment safety check
   static String get rewardedAdUnitId {

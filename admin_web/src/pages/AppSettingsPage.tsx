@@ -337,16 +337,16 @@ export const AppSettingsPage: React.FC<AppSettingsPageProps> = ({
             </div>
           </AdminCard>
 
-          {/* Popular This Week */}
+          {/* Popular Jobs */}
           <AdminCard
-            title="Popular This Week Section"
+            title="Popular Jobs Section"
             subtitle="Ranks real vacancies based on aspirant view counts. Safe deterministic fallback if no views exist."
           >
             <div className="space-y-4">
               <ToggleSwitch
                 checked={settings.popularEnabled}
                 onChange={(checked) => handleUpdate('popularEnabled', checked)}
-                label="Show Popular This Week"
+                label="Show Popular Jobs"
                 description="Based strictly on real Firestore view counts. Zero fake stats."
               />
 
@@ -354,7 +354,7 @@ export const AppSettingsPage: React.FC<AppSettingsPageProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200/70 rounded-xl">
                   <AdminInput
                     label="Section Title"
-                    value={settings.popularTitle || 'Popular This Week'}
+                    value={settings.popularTitle || 'Popular Jobs'}
                     onChange={(e) => handleUpdate('popularTitle', e.target.value)}
                   />
                   <AdminInput
@@ -421,6 +421,85 @@ export const AppSettingsPage: React.FC<AppSettingsPageProps> = ({
                   />
                 </div>
               )}
+            </div>
+          </AdminCard>
+
+          {/* Additional Dynamic Section Headings */}
+          <AdminCard
+            title="Home Section Headings & Subtitles"
+            subtitle="Customize titles and subtitles for A&N Jobs, Important Updates, and Articles without rebuilding the app"
+          >
+            <div className="space-y-4 p-4 bg-slate-50 border border-slate-200/70 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminInput
+                  label="A&N Jobs Section Title"
+                  value={settings.andamanJobsTitle || 'A&N Jobs'}
+                  onChange={(e) => handleUpdate('andamanJobsTitle', e.target.value)}
+                  placeholder="A&N Jobs"
+                />
+                <AdminInput
+                  label="A&N Jobs Section Subtitle"
+                  value={settings.andamanJobsSubtitle || 'Islands local recruitments'}
+                  onChange={(e) => handleUpdate('andamanJobsSubtitle', e.target.value)}
+                  placeholder="Islands local recruitments"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                <AdminInput
+                  label="Important Updates Section Title"
+                  value={settings.importantUpdatesTitle || 'Important Updates'}
+                  onChange={(e) => handleUpdate('importantUpdatesTitle', e.target.value)}
+                  placeholder="Important Updates"
+                />
+                <AdminInput
+                  label="Important Updates Section Subtitle"
+                  value={settings.importantUpdatesSubtitle || 'Admit cards, results & answer keys'}
+                  onChange={(e) => handleUpdate('importantUpdatesSubtitle', e.target.value)}
+                  placeholder="Admit cards, results & answer keys"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                <AdminInput
+                  label="Articles Section Title"
+                  value={settings.articlesTitle || 'Articles & Guides'}
+                  onChange={(e) => handleUpdate('articlesTitle', e.target.value)}
+                  placeholder="Articles & Guides"
+                />
+                <AdminInput
+                  label="Articles Section Subtitle"
+                  value={settings.articlesSubtitle || 'Exam preparation tips & syllabi'}
+                  onChange={(e) => handleUpdate('articlesSubtitle', e.target.value)}
+                  placeholder="Exam preparation tips & syllabi"
+                />
+              </div>
+            </div>
+          </AdminCard>
+
+          {/* Automatic NEW Badge Configuration */}
+          <AdminCard
+            title="Automatic NEW Badge Configuration"
+            subtitle="Controls how long newly published recruitments display the subtle 'NEW' badge before automatically disappearing"
+          >
+            <div className="p-4 bg-slate-50 border border-slate-200/70 rounded-xl space-y-3">
+              <label className="block text-xs font-semibold text-slate-700">
+                NEW Badge Active Duration
+              </label>
+              <select
+                value={settings.newBadgeDurationDays || 3}
+                onChange={(e) => handleUpdate('newBadgeDurationDays', parseInt(e.target.value) || 3)}
+                className="w-full sm:w-72 text-sm rounded-xl border border-slate-200 p-2.5 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#159B76]/20"
+              >
+                <option value={1}>1 Day (24 Hours)</option>
+                <option value={2}>2 Days (48 Hours)</option>
+                <option value={3}>3 Days (72 Hours - Recommended Default)</option>
+                <option value={5}>5 Days (120 Hours)</option>
+                <option value={7}>7 Days (1 Week)</option>
+              </select>
+              <p className="text-xs text-slate-500">
+                The mobile app dynamically derives freshness: (currentTime &lt; publishedAt + duration). Once expired, the NEW badge automatically disappears with zero manual removal or database cleanup required.
+              </p>
             </div>
           </AdminCard>
         </div>
@@ -538,9 +617,61 @@ export const AppSettingsPage: React.FC<AppSettingsPageProps> = ({
               <ToggleSwitch
                 checked={settings.proPageEnabled}
                 onChange={(checked) => handleUpdate('proPageEnabled', checked)}
-                label="Notify Jobs Pro Gate"
-                description="Enable Pro premium membership features and screen"
+                label="Support & Ad-Free Experience"
+                description="Enable unified Support Notify Jobs screen with ad-free pass and contribution tiers"
               />
+            </div>
+          </AdminCard>
+
+          {/* Support Notify Jobs & Ad-Free Settings */}
+          <AdminCard
+            title="Support Notify Jobs & Ad-Free Settings"
+            subtitle="Configures copy, descriptions, and Play Billing product mappings for the unified Support & Remove Ads experience"
+          >
+            <div className="space-y-4 p-4 bg-slate-50 border border-slate-200/70 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminInput
+                  label="Support Page Heading"
+                  value={settings.supportPageHeading || 'Support Notify Jobs'}
+                  onChange={(e) => handleUpdate('supportPageHeading', e.target.value)}
+                  placeholder="Support Notify Jobs"
+                />
+                <AdminInput
+                  label="Primary Ad-Free Product Label"
+                  value={settings.adFreeProductLabel || 'Support & Remove Ads'}
+                  onChange={(e) => handleUpdate('adFreeProductLabel', e.target.value)}
+                  placeholder="Support & Remove Ads"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Support Page Subtitle
+                </label>
+                <textarea
+                  rows={2}
+                  value={settings.supportPageSubtitle || ''}
+                  onChange={(e) => handleUpdate('supportPageSubtitle', e.target.value)}
+                  placeholder="Support independent development. Your support helps us maintain Notify Jobs and improve recruitment updates."
+                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#159B76]/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminInput
+                  label="Ad-Free Google Play Product ID"
+                  value={settings.adFreeProductId || 'notify_jobs_pro_lifetime'}
+                  onChange={(e) => handleUpdate('adFreeProductId', e.target.value)}
+                  placeholder="notify_jobs_pro_lifetime"
+                  hint="Actual currency and price charged is retrieved directly from Google Play Billing ProductDetails."
+                />
+                <AdminInput
+                  label="Thank-You Success Message"
+                  value={settings.thankYouMessage || ''}
+                  onChange={(e) => handleUpdate('thankYouMessage', e.target.value)}
+                  placeholder="Thank you! Your ad-free experience is now active."
+                />
+              </div>
             </div>
           </AdminCard>
         </div>

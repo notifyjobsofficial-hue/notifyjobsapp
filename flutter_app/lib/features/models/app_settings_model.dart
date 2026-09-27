@@ -29,7 +29,17 @@ class AppSettingsModel {
   final String disclaimerUrl;
   final String contactUrl;
 
+  final bool adsEnabled;
   final bool rewardedAdsEnabled;
+  final bool supportRewardedEnabled;
+  final bool applyRewardedEnabled;
+  final bool notificationDownloadRewardedEnabled;
+  final bool officialWebsiteRewardedEnabled;
+  final bool allowSkipRewarded;
+  final int rewardedCooldownMinutes;
+  final String rewardedAdUnitAndroid;
+  final bool testMode;
+
   final bool rewardNotificationEnabled;
   final int rewardUnlockMinutes;
   final String rewardPromptText;
@@ -81,6 +91,26 @@ class AppSettingsModel {
   final bool notificationPreferencesEnabled;
   final bool socialSectionEnabled;
 
+  // Dynamic Badges & Section Headings (v1.1)
+  final int newBadgeDurationDays;
+  final String andamanJobsTitle;
+  final String andamanJobsSubtitle;
+  final String importantUpdatesTitle;
+  final String importantUpdatesSubtitle;
+  final String articlesTitle;
+  final String articlesSubtitle;
+
+  // Merged Support & Ad-Free Settings (v1.1)
+  final String supportPageHeading;
+  final String supportPageSubtitle;
+  final String adFreeProductId;
+  final String adFreeProductLabel;
+  final String adFreeProductDescription;
+  final String thankYouMessage;
+
+  // Predefined Ad Slots Configuration (v1.1)
+  final Map<String, dynamic> adSlots;
+
   const AppSettingsModel({
     this.appTitle = 'Notify Jobs',
     this.tagline = 'Government Jobs. Results. Admit Cards. One App.',
@@ -109,7 +139,16 @@ class AppSettingsModel {
     this.termsUrl = '',
     this.disclaimerUrl = '',
     this.contactUrl = '',
+    this.adsEnabled = true,
     this.rewardedAdsEnabled = true,
+    this.supportRewardedEnabled = true,
+    this.applyRewardedEnabled = true,
+    this.notificationDownloadRewardedEnabled = true,
+    this.officialWebsiteRewardedEnabled = true,
+    this.allowSkipRewarded = true,
+    this.rewardedCooldownMinutes = 10,
+    this.rewardedAdUnitAndroid = '',
+    this.testMode = false,
     this.rewardNotificationEnabled = true,
     this.rewardUnlockMinutes = 30,
     this.rewardPromptText =
@@ -162,6 +201,29 @@ class AppSettingsModel {
     this.supportPageEnabled = true,
     this.notificationPreferencesEnabled = true,
     this.socialSectionEnabled = true,
+
+    // Dynamic Badges & Section Headings Defaults
+    this.newBadgeDurationDays = 3,
+    this.andamanJobsTitle = 'Andaman & Nicobar Vacancies',
+    this.andamanJobsSubtitle = 'Island recruitment notifications',
+    this.importantUpdatesTitle = 'Important Updates & Results',
+    this.importantUpdatesSubtitle = 'Admit cards, results & answers',
+    this.articlesTitle = 'Preparation & Career Guides',
+    this.articlesSubtitle = 'Syllabus, guides and exam prep',
+
+    // Merged Support & Ad-Free Settings Defaults
+    this.supportPageHeading = 'Support Notify Jobs',
+    this.supportPageSubtitle =
+        'Keep recruitment alerts free, fast & independent for everyone.',
+    this.adFreeProductId = 'notify_jobs_pro_lifetime',
+    this.adFreeProductLabel = 'Ad-Free Experience (Lifetime)',
+    this.adFreeProductDescription =
+        'Browse all notifications, admit cards & results completely ad-free forever.',
+    this.thankYouMessage =
+        'Thank you for your generous support! Your ad-free experience is active.',
+
+    // Predefined Ad Slots Defaults
+    this.adSlots = const {},
   });
 
   /// Check whether announcement banner is active and within schedule window
@@ -197,8 +259,7 @@ class AppSettingsModel {
       forceUpdateUrl: map['forceUpdateUrl']?.toString() ??
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
       supportEmail: map['supportEmail']?.toString() ?? '',
-      supportWebsite:
-          map['supportWebsite']?.toString() ?? '',
+      supportWebsite: map['supportWebsite']?.toString() ?? '',
       whatsappUrl: map['whatsappUrl']?.toString() ?? '',
       whatsappEnabled: map['whatsappEnabled'] != false,
       telegramUrl: map['telegramUrl']?.toString() ?? '',
@@ -211,21 +272,31 @@ class AppSettingsModel {
       instagramEnabled: map['instagramEnabled'] != false,
       xUrl: map['xUrl']?.toString() ?? '',
       xEnabled: map['xEnabled'] != false,
-      privacyUrl:
-          map['privacyUrl']?.toString() ?? '',
+      privacyUrl: map['privacyUrl']?.toString() ?? '',
       termsUrl: map['termsUrl']?.toString() ?? '',
       disclaimerUrl: map['disclaimerUrl']?.toString() ?? '',
-      contactUrl:
-          map['contactUrl']?.toString() ?? '',
+      contactUrl: map['contactUrl']?.toString() ?? '',
+      adsEnabled: map['adsEnabled'] != false,
       rewardedAdsEnabled: map['rewardedAdsEnabled'] != false,
+      supportRewardedEnabled: map['supportRewardedEnabled'] != false,
+      applyRewardedEnabled: map['applyRewardedEnabled'] != false,
+      notificationDownloadRewardedEnabled:
+          map['notificationDownloadRewardedEnabled'] != false,
+      officialWebsiteRewardedEnabled:
+          map['officialWebsiteRewardedEnabled'] != false,
+      allowSkipRewarded: map['allowSkipRewarded'] != false,
+      rewardedCooldownMinutes:
+          int.tryParse(map['rewardedCooldownMinutes']?.toString() ?? '10') ??
+              10,
+      rewardedAdUnitAndroid: map['rewardedAdUnitAndroid']?.toString() ?? '',
+      testMode: map['testMode'] == true,
       rewardNotificationEnabled: map['rewardNotificationEnabled'] != false,
       rewardUnlockMinutes:
           int.tryParse(map['rewardUnlockMinutes']?.toString() ?? '30') ?? 30,
       rewardPromptText: map['rewardPromptText']?.toString() ??
           'Watch a short ad to open the official notification.',
       rewardButtonText: map['rewardButtonText']?.toString() ?? 'Watch Ad',
-      shareBaseUrl:
-          map['shareBaseUrl']?.toString() ?? '',
+      shareBaseUrl: map['shareBaseUrl']?.toString() ?? '',
       playStoreUrl: map['playStoreUrl']?.toString() ??
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
       disclaimer: map['disclaimer']?.toString() ??
@@ -248,7 +319,8 @@ class AppSettingsModel {
           int.tryParse(map['liveUpdatesMaxItems']?.toString() ?? '5') ?? 5,
       liveUpdatesAutoSlideEnabled: map['liveUpdatesAutoSlideEnabled'] != false,
       liveUpdatesAutoSlideSeconds:
-          int.tryParse(map['liveUpdatesAutoSlideSeconds']?.toString() ?? '4') ?? 4,
+          int.tryParse(map['liveUpdatesAutoSlideSeconds']?.toString() ?? '4') ??
+              4,
 
       // Closing Soon
       closingSoonEnabled: map['closingSoonEnabled'] != false,
@@ -281,6 +353,41 @@ class AppSettingsModel {
       notificationPreferencesEnabled:
           map['notificationPreferencesEnabled'] != false,
       socialSectionEnabled: map['socialSectionEnabled'] != false,
+
+      // Dynamic Badges & Section Headings
+      newBadgeDurationDays:
+          int.tryParse(map['newBadgeDurationDays']?.toString() ?? '3') ?? 3,
+      andamanJobsTitle:
+          map['andamanJobsTitle']?.toString() ?? 'Andaman & Nicobar Vacancies',
+      andamanJobsSubtitle: map['andamanJobsSubtitle']?.toString() ??
+          'Island recruitment notifications',
+      importantUpdatesTitle: map['importantUpdatesTitle']?.toString() ??
+          'Important Updates & Results',
+      importantUpdatesSubtitle: map['importantUpdatesSubtitle']?.toString() ??
+          'Admit cards, results & answers',
+      articlesTitle:
+          map['articlesTitle']?.toString() ?? 'Preparation & Career Guides',
+      articlesSubtitle: map['articlesSubtitle']?.toString() ??
+          'Syllabus, guides and exam prep',
+
+      // Merged Support & Ad-Free Settings
+      supportPageHeading:
+          map['supportPageHeading']?.toString() ?? 'Support Notify Jobs',
+      supportPageSubtitle: map['supportPageSubtitle']?.toString() ??
+          'Keep recruitment alerts free, fast & independent for everyone.',
+      adFreeProductId:
+          map['adFreeProductId']?.toString() ?? 'notify_jobs_pro_lifetime',
+      adFreeProductLabel: map['adFreeProductLabel']?.toString() ??
+          'Ad-Free Experience (Lifetime)',
+      adFreeProductDescription: map['adFreeProductDescription']?.toString() ??
+          'Browse all notifications, admit cards & results completely ad-free forever.',
+      thankYouMessage: map['thankYouMessage']?.toString() ??
+          'Thank you for your generous support! Your ad-free experience is active.',
+
+      // Predefined Ad Slots
+      adSlots: map['adSlots'] is Map
+          ? Map<String, dynamic>.from(map['adSlots'])
+          : const {},
     );
   }
 

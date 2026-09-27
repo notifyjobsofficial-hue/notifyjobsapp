@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../../features/models/content_model.dart';
+import '../services/share_service.dart';
 
 /// Premium Context-Aware Social Share Bottom Sheet (Specification 26–30 & 129)
 class NjShareSheet extends StatelessWidget {
@@ -34,43 +35,18 @@ class NjShareSheet extends StatelessWidget {
     );
   }
 
-  /// Construct context-aware share text (Specification 28)
   String _generateShareText() {
-    final buffer = StringBuffer();
-    buffer.writeln(content.title);
-    buffer.writeln();
-
-    if (content.organization.isNotEmpty) {
-      buffer.writeln(content.organization);
-      buffer.writeln();
-    }
-
-    if (content.vacancies.isNotEmpty) {
-      buffer.writeln('Vacancies: ${content.vacancies}');
-    }
-
-    if (content.applicationLastDate != null &&
-        content.applicationLastDate!.isNotEmpty) {
-      buffer.writeln('Last Date: ${content.displayLastDate}');
-    }
-
-    final url = _getShareUrl();
-    if (url.isNotEmpty) {
-      buffer.writeln();
-      buffer.writeln('View full details:');
-      buffer.writeln(url);
-    }
-
-    return buffer.toString().trim();
+    return ShareService.formatShareMessage(
+      content: content,
+      configuredBaseUrl: shareBaseUrl,
+    );
   }
 
   String _getShareUrl() {
-    if (shareBaseUrl.isNotEmpty) {
-      final cleanBase =
-          shareBaseUrl.endsWith('/') ? shareBaseUrl : '$shareBaseUrl/';
-      return '$cleanBase${content.slug}';
-    }
-    return content.sourceUrl ?? '';
+    return ShareService.resolveShareUrl(
+      content: content,
+      configuredBaseUrl: shareBaseUrl,
+    );
   }
 
   @override
@@ -139,18 +115,20 @@ class NjShareSheet extends StatelessWidget {
                   iconColor: const Color(0xFF16A34A),
                   onTap: () async {
                     Navigator.pop(context);
-                    final encoded = Uri.encodeComponent(shareText);
-                    final uri = Uri.parse('whatsapp://send?text=$encoded');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    } else {
-                      // Fallback to web
-                      await launchUrl(
-                        Uri.parse(
-                            'https://api.whatsapp.com/send?text=$encoded'),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    }
+                    try {
+                      final encoded = Uri.encodeComponent(shareText);
+                      final uri = Uri.parse('whatsapp://send?text=$encoded');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        // Fallback to web
+                        await launchUrl(
+                          Uri.parse(
+                              'https://api.whatsapp.com/send?text=$encoded'),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    } catch (_) {}
                   },
                 ),
 
@@ -162,11 +140,14 @@ class NjShareSheet extends StatelessWidget {
                   iconColor: const Color(0xFF0284C7),
                   onTap: () async {
                     Navigator.pop(context);
-                    final encodedText = Uri.encodeComponent(shareText);
-                    final encodedUrl = Uri.encodeComponent(shareUrl);
-                    final uri = Uri.parse(
-                        'https://t.me/share/url?url=$encodedUrl&text=$encodedText');
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    try {
+                      final encodedText = Uri.encodeComponent(shareText);
+                      final encodedUrl = Uri.encodeComponent(shareUrl);
+                      final uri = Uri.parse(
+                          'https://t.me/share/url?url=$encodedUrl&text=$encodedText');
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    } catch (_) {}
                   },
                 ),
 

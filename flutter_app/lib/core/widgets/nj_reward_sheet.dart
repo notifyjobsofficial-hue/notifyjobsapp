@@ -5,7 +5,7 @@ import '../theme/app_typography.dart';
 import '../services/admob_service.dart';
 import 'nj_button.dart';
 
-/// Premium Rewarded Ad Confirmation & Unlock Bottom Sheet (Specification 43–46 & 129)
+/// Legacy Rewarded Ad Confirmation Bottom Sheet (kept for backward compatibility)
 class NjRewardSheet extends StatefulWidget {
   final String title;
   final String promptMessage;
@@ -48,70 +48,47 @@ class NjRewardSheet extends StatefulWidget {
 }
 
 class _NjRewardSheetState extends State<NjRewardSheet> {
-  final AdMobService _adService = AdMobService();
-  RewardState _state = RewardState.idle;
+  bool _isLoading = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    // Preload rewarded ad
-    _loadAd();
-  }
-
-  Future<void> _loadAd() async {
-    setState(() {
-      _error = null;
-    });
-
-    await _adService.loadRewardedAd(
-      onStateChanged: (state) {
-        if (mounted) {
-          setState(() {
-            _state = state;
-            if (state == RewardState.failed) {
-              _error = _adService.errorMessage ?? 'Ad unavailable right now.';
-            }
-          });
-        }
-      },
-    );
+    AdMobService.instance.preloadRewardedAd();
   }
 
   Future<void> _onWatchAd() async {
-    // Prevent double taps (Specification 44)
-    if (_state == RewardState.loading || _state == RewardState.showing) return;
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-    if (_state == RewardState.ready) {
-      await _adService.showRewardedAd(
-        onStateChanged: (state) {
-          if (mounted) {
-            setState(() {
-              _state = state;
-              if (state == RewardState.failed) {
-                _error = _adService.errorMessage;
-              }
-            });
-          }
-        },
-        onUserEarnedReward: () {
-          HapticFeedback.heavyImpact();
-          if (mounted) {
-            Navigator.pop(context);
-            widget.onRewardUnlocked();
-          }
-        },
-      );
-    } else {
-      // Not ready yet, retry loading
-      await _loadAd();
+    await AdMobService.instance.showRewardedAd(
+      onUserEarnedReward: () {
+        if (!mounted) return;
+        Navigator.pop(context);
+        widget.onRewardUnlocked();
+      },
+      onAdDismissedEarly: () {
+        if (!mounted) return;
+        Navigator.pop(context);
+        widget.onRewardUnlocked();
+      },
+      onAdFailedToShow: (error) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Ad unavailable right now.';
+          _isLoading = false;
+        });
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
-  }
-
-  @override
-  void dispose() {
-    _adService.reset();
-    super.dispose();
   }
 
   @override
@@ -232,20 +209,31 @@ class _NjRewardSheetState extends State<NjRewardSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: NjButton(
-                    label: _state == RewardState.failed
-                        ? 'Retry Ad'
-                        : widget.buttonText,
+                    label: widget.buttonText,
                     variant: NjButtonVariant.primary,
-                    isLoading: _state == RewardState.loading ||
-                        _state == RewardState.showing,
+                    isLoading: _isLoading,
                     icon: const Icon(Icons.play_circle_outline,
                         size: 18, color: Colors.white),
-                    onPressed:
-                        _state == RewardState.failed ? _loadAd : _onWatchAd,
+                    onPressed: _onWatchAd,
                   ),
                 ),
               ],
             ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              TextButton.icon(
+                icon: const Icon(Icons.arrow_forward_rounded, size: 15),
+                label: const Text('Open Directly (Ad Unavailable)'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onRewardUnlocked();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTypography.button.copyWith(fontSize: 12),
+                ),
+              ),
+            ],
           ],
         ),
       ),

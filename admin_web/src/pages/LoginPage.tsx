@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../firebase/config';
 import { AdminInput } from '../components/common/AdminInput';
 import { AdminButton } from '../components/common/AdminButton';
+import { BrandLogo } from '../components/common/BrandLogo';
 import { ShieldCheck, Lock, Mail, AlertCircle } from 'lucide-react';
 
 interface LoginPageProps {
@@ -97,9 +98,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#159B76] flex items-center justify-center text-white text-xl font-extrabold shadow-lg shadow-[#159B76]/30">
-            NJ
-          </div>
+          <BrandLogo className="w-14 h-14" />
         </div>
         <h2 className="mt-4 text-center text-2xl font-extrabold text-slate-900 tracking-tight">
           Notify Jobs Admin Portal

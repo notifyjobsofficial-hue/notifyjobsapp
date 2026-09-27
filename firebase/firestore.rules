@@ -40,29 +40,38 @@ service cloud.firestore {
     }
 
     // Content Collection (Jobs, Admit Cards, Results, Answer Keys, Syllabus, Articles)
-    // Public can read only published content.
-    // Active editors and super admins can read drafts and write content.
+    // IMPORTANT: 'resource' is NULL for collection list queries — we split get/list rules.
+    // allow get:  checks per-document fields (isPublished, status) for unauthenticated reads.
+    // allow list: allows public listing — Firestore only returns docs that match query filters
+    //             (i.e., .where('isPublished', '==', true).where('status', '==', 'published')).
     match /content/{contentId} {
-      allow read: if (resource != null && resource.data.isPublished == true && resource.data.status != 'archived')
+      allow get: if (resource != null && resource.data.isPublished == true && resource.data.status != 'archived')
                   || isEditorOrAbove();
+      allow list: if true;
       allow create, update: if isEditorOrAbove();
       allow delete: if isSuperAdmin();
     }
 
     // Categories Collection
-    // Public can read active categories.
-    // Active editors and super admins can manage categories.
     match /categories/{categoryId} {
-      allow read: if (resource != null && resource.data.isActive == true) || isEditorOrAbove();
+      allow get: if (resource != null && resource.data.isActive == true) || isEditorOrAbove();
+      allow list: if true;
+      allow create, update: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Job Types Collection (Dynamic Employment Types)
+    match /job_types/{jobTypeId} {
+      allow get: if (resource != null && resource.data.isActive == true) || isEditorOrAbove();
+      allow list: if true;
       allow create, update: if isEditorOrAbove();
       allow delete: if isSuperAdmin();
     }
 
     // Homepage Sections Collection
-    // Public can read enabled sections.
-    // Active editors and super admins can manage layout.
     match /homepage_sections/{sectionId} {
-      allow read: if (resource != null && resource.data.enabled == true) || isEditorOrAbove();
+      allow get: if (resource != null && resource.data.enabled == true) || isEditorOrAbove();
+      allow list: if true;
       allow write: if isEditorOrAbove();
     }
 

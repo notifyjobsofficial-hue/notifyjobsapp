@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="notification_accent">#159B76</color>
+    <color name="brand_navy">#0B2C5F</color>
+    <color name="brand_emerald">#159B76</color>
+    <color name="brand_amber">#F59E0B</color>
+    <color name="splash_navy">#030A19</color>
+</resources>

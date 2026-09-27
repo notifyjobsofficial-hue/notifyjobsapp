@@ -3,19 +3,22 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'nj_card.dart';
 import 'nj_badge.dart';
+import 'nj_icon_container.dart';
 import '../../features/models/content_model.dart';
 
-/// Specialized Update Card for Results, Admit Cards, Answer Keys, Syllabus (Specification 53–57)
+/// Specialized Compact Update Card for Results, Admit Cards, Answer Keys, Syllabus
 class NjUpdateCard extends StatelessWidget {
   final ContentModel item;
   final VoidCallback onTap;
   final VoidCallback? onShare;
+  final int newBadgeDurationDays;
 
   const NjUpdateCard({
     super.key,
     required this.item,
     required this.onTap,
     this.onShare,
+    this.newBadgeDurationDays = 3,
   });
 
   @override
@@ -49,7 +52,7 @@ class NjUpdateCard extends StatelessWidget {
         actionLabel = 'View Answer Key';
         actionIcon = Icons.fact_check_outlined;
         accentColor = const Color(0xFF0284C7);
-        dateLabel = 'Objection Last Date';
+        dateLabel = 'Objection Till';
         dateValue = item.displayLastDate;
         break;
       case 'syllabus':
@@ -60,7 +63,7 @@ class NjUpdateCard extends StatelessWidget {
         dateValue = item.displayPublishedDate;
         break;
       default:
-        actionLabel = 'Read Article';
+        actionLabel = 'Check Update';
         actionIcon = Icons.article_outlined;
         accentColor = AppColors.primary;
         dateLabel = 'Published';
@@ -70,100 +73,165 @@ class NjUpdateCard extends StatelessWidget {
 
     return NjCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      borderRadius: 14,
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Header Row: Organization & Category Badge
+          // Header Row with Category Icon, Org & Badges
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  item.organization.isNotEmpty
-                      ? item.organization
-                      : 'Notify Jobs Update',
-                  style: AppTypography.subtitle.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.secondaryText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              NjCategoryIcon(
+                categorySlug: item.contentType,
+                size: 36,
+                iconSize: 18,
+                borderRadius: 9,
               ),
-              NjBadge(
-                label: item.categoryDisplay,
-                customColor: accentColor,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.organization.isNotEmpty
+                                ? item.organization
+                                : 'Official Update',
+                            style: AppTypography.subtitle.copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.secondaryText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        if (item.isNew(newBadgeDurationDays)) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEF4444),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'NEW',
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Flexible(
+                          child: NjBadge(
+                            label: item.categoryDisplay,
+                            customColor: accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.title,
+                      style: AppTypography.cardTitle.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-
-          // Title
-          Text(
-            item.title,
-            style: AppTypography.cardTitle.copyWith(
-              color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Date Strip & Action Button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 13,
-                    color:
-                        isDark ? AppColors.darkTextSecondary : AppColors.muted,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    '$dateLabel: ',
-                    style: AppTypography.caption.copyWith(
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.event_note_outlined,
+                      size: 13,
                       color: isDark
                           ? AppColors.darkTextSecondary
                           : AppColors.muted,
                     ),
-                  ),
-                  Text(
-                    dateValue,
-                    style: AppTypography.caption.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '$dateLabel: ',
+                              style: AppTypography.caption.copyWith(
+                                fontSize: 11,
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.muted,
+                              ),
+                            ),
+                            TextSpan(
+                              text: dateValue,
+                              style: AppTypography.caption.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.navy,
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: onTap,
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                     border: Border.all(
-                        color: accentColor.withOpacity(0.3), width: 0.8),
+                      color: accentColor.withOpacity(0.3),
+                      width: 0.8,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(actionIcon, size: 14, color: accentColor),
-                      const SizedBox(width: 5),
+                      Icon(actionIcon, size: 12, color: accentColor),
+                      const SizedBox(width: 4),
                       Text(
                         actionLabel,
-                        style: AppTypography.button.copyWith(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           color: accentColor,
                         ),
                       ),

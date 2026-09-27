@@ -1,128 +1,76 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../utils/status_engine.dart';
 
-/// Dynamic Application Deadline Status Engine (Specification 63 & 129)
+/// Dynamic Application Deadline & Content Status Badge (Specification 63 & 129)
 class NjStatusBadge extends StatelessWidget {
+  final String? contentType;
   final String? applicationLastDate;
   final String? statusOverride;
   final dynamic lastDate;
 
   const NjStatusBadge({
     super.key,
+    this.contentType,
     this.applicationLastDate,
     this.statusOverride,
     this.lastDate,
   });
 
+  /// Factory helper for backwards compatibility
   static ({String label, Color color, Color bgColor}) computeStatus({
+    String? contentType,
     String? applicationLastDate,
     String? statusOverride,
     dynamic lastDate,
   }) {
-    String? resolvedDate = applicationLastDate;
-    if (lastDate != null) {
-      if (lastDate is DateTime) {
-        resolvedDate = lastDate.toIso8601String();
-      } else {
-        resolvedDate = lastDate.toString();
-      }
-    }
-    if (statusOverride != null &&
-        statusOverride != 'auto' &&
-        statusOverride.isNotEmpty) {
-      switch (statusOverride) {
-        case 'open':
-          return (
-            label: 'Open',
-            color: AppColors.primary,
-            bgColor: AppColors.softGreen,
-          );
-        case 'closing_soon':
-          return (
-            label: 'Closing Soon',
-            color: const Color(0xFFD97706),
-            bgColor: AppColors.amberSoft,
-          );
-        case 'closing_today':
-          return (
-            label: 'Closing Today',
-            color: AppColors.error,
-            bgColor: AppColors.errorSoft,
-          );
-        case 'closed':
-          return (
-            label: 'Closed',
-            color: AppColors.muted,
-            bgColor: const Color(0xFFF1F5F9),
-          );
-      }
+    DateTime? resolvedLastDate;
+    if (lastDate is DateTime) {
+      resolvedLastDate = lastDate;
+    } else if (lastDate != null) {
+      resolvedLastDate = DateTime.tryParse(lastDate.toString().trim());
+    } else if (applicationLastDate != null &&
+        applicationLastDate.trim().isNotEmpty) {
+      resolvedLastDate = DateTime.tryParse(applicationLastDate.trim());
     }
 
-    if (resolvedDate == null || resolvedDate.trim().isEmpty) {
-      return (
-        label: 'Open',
-        color: AppColors.primary,
-        bgColor: AppColors.softGreen,
-      );
-    }
+    final computed = StatusEngine.compute(
+      contentType: contentType ?? 'government_job',
+      lastDate: resolvedLastDate,
+      explicitStatus: statusOverride,
+    );
 
-    try {
-      final deadline = DateTime.parse(resolvedDate.trim());
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final target = DateTime(deadline.year, deadline.month, deadline.day);
-
-      final diffDays = target.difference(today).inDays;
-
-      if (diffDays < 0) {
-        return (
-          label: 'Closed',
-          color: AppColors.muted,
-          bgColor: const Color(0xFFF1F5F9),
-        );
-      } else if (diffDays == 0) {
-        return (
-          label: 'Closing Today',
-          color: AppColors.error,
-          bgColor: AppColors.errorSoft,
-        );
-      } else if (diffDays <= 3) {
-        return (
-          label: 'Closing in ${diffDays}d',
-          color: const Color(0xFFD97706),
-          bgColor: AppColors.amberSoft,
-        );
-      } else {
-        return (
-          label: 'Open',
-          color: AppColors.primary,
-          bgColor: AppColors.softGreen,
-        );
-      }
-    } catch (_) {
-      return (
-        label: 'Open',
-        color: AppColors.primary,
-        bgColor: AppColors.softGreen,
-      );
-    }
+    return (
+      label: computed.label,
+      color: computed.foregroundColor,
+      bgColor: computed.backgroundColor,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = computeStatus(
-      applicationLastDate: applicationLastDate,
-      statusOverride: statusOverride,
-      lastDate: lastDate,
+    DateTime? resolvedLastDate;
+    if (lastDate is DateTime) {
+      resolvedLastDate = lastDate;
+    } else if (lastDate != null) {
+      resolvedLastDate = DateTime.tryParse(lastDate.toString().trim());
+    } else if (applicationLastDate != null &&
+        applicationLastDate!.trim().isNotEmpty) {
+      resolvedLastDate = DateTime.tryParse(applicationLastDate!.trim());
+    }
+
+    final status = StatusEngine.compute(
+      contentType: contentType ?? 'government_job',
+      lastDate: resolvedLastDate,
+      explicitStatus: statusOverride,
     );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
-        color: status.bgColor,
+        color: status.backgroundColor,
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: status.color.withOpacity(0.3), width: 0.8),
+        border: Border.all(color: status.borderColor, width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -132,17 +80,21 @@ class NjStatusBadge extends StatelessWidget {
             height: 5,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: status.color,
+              color: status.foregroundColor,
             ),
           ),
           const SizedBox(width: 5),
-          Text(
-            status.label,
-            style: AppTypography.caption.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: status.color,
-              letterSpacing: -0.1,
+          Flexible(
+            child: Text(
+              status.label,
+              style: AppTypography.caption.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: status.foregroundColor,
+                letterSpacing: -0.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

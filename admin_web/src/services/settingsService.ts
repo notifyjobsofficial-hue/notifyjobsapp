@@ -73,9 +73,9 @@ export const defaultAppSettings: AppSettings = {
   closingSoonDaysThreshold: 7,
   closingSoonMaxItems: 5,
 
-  // Popular This Week (v1.1)
+  // Popular Jobs (v1.1)
   popularEnabled: true,
-  popularTitle: 'Popular This Week',
+  popularTitle: 'Popular Jobs',
   popularMaxItems: 5,
 
   // Latest Jobs (v1.1)
@@ -92,6 +92,119 @@ export const defaultAppSettings: AppSettings = {
   supportPageEnabled: true,
   notificationPreferencesEnabled: true,
   socialSectionEnabled: true,
+
+  // NEW Badge duration in days
+  newBadgeDurationDays: 3,
+
+  // Additional dynamic section titles & subtitles
+  andamanJobsTitle: 'A&N Jobs',
+  andamanJobsSubtitle: 'Islands local recruitments',
+  importantUpdatesTitle: 'Important Updates',
+  importantUpdatesSubtitle: 'Admit cards, results & answer keys',
+  articlesTitle: 'Articles & Guides',
+  articlesSubtitle: 'Exam preparation tips & syllabi',
+
+  // Merged Support & Ad-Free Settings
+  supportPageHeading: 'Support Notify Jobs',
+  supportPageSubtitle:
+    'Support independent development. Your support helps us maintain Notify Jobs and improve recruitment updates.',
+  adFreeProductLabel: 'Support & Remove Ads',
+  adFreeProductDescription:
+    'Enjoy a faster, ad-free experience while supporting our team.',
+  adFreeProductId: 'notify_jobs_pro_lifetime',
+  supportProducts: [
+    {
+      id: 'tip_29',
+      label: 'Warm Chai',
+      description: 'Support our server costs with a cup of tea',
+      productId: 'notify_jobs_support_29',
+      order: 1,
+      enabled: true,
+      icon: 'coffee',
+    },
+    {
+      id: 'tip_59',
+      label: 'Coffee Fuel',
+      description: 'Keep the team alert and updating notifications',
+      productId: 'notify_jobs_support_59',
+      order: 2,
+      enabled: true,
+      icon: 'coffee',
+    },
+    {
+      id: 'tip_99',
+      label: 'Generous Sponsor',
+      description: 'Help fund faster notifications and verification',
+      productId: 'notify_jobs_support_99',
+      order: 3,
+      enabled: true,
+      isRecommended: true,
+      icon: 'heart',
+    },
+    {
+      id: 'tip_199',
+      label: 'Aspirant Champion',
+      description: 'Support high-reliability server bandwidth',
+      productId: 'notify_jobs_support_199',
+      order: 4,
+      enabled: true,
+      icon: 'trophy',
+    },
+    {
+      id: 'tip_499',
+      label: 'Platinum Patron',
+      description: 'Power long-term development of Notify Jobs',
+      productId: 'notify_jobs_support_499',
+      order: 5,
+      enabled: true,
+      icon: 'star',
+    },
+  ],
+  thankYouMessage: 'Thank you! Your contribution keeps Notify Jobs independent and fast.',
+
+  // Safe Predefined Ad Slots
+  adSlots: {
+    officialNotificationRewarded: {
+      id: 'official_notification_rewarded',
+      name: 'Before Official Notification PDF',
+      format: 'rewarded',
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      enabled: true,
+      freeUserOnly: true,
+    },
+    downloadAdmitCardRewarded: {
+      id: 'download_admit_card_rewarded',
+      name: 'Before Download Admit Card',
+      format: 'rewarded',
+      adUnitId: '',
+      enabled: false,
+      freeUserOnly: true,
+    },
+    viewResultRewarded: {
+      id: 'view_result_rewarded',
+      name: 'Before View Result / Merit List',
+      format: 'rewarded',
+      adUnitId: '',
+      enabled: false,
+      freeUserOnly: true,
+    },
+    viewAnswerKeyRewarded: {
+      id: 'view_answer_key_rewarded',
+      name: 'Before View Answer Key',
+      format: 'rewarded',
+      adUnitId: '',
+      enabled: false,
+      freeUserOnly: true,
+    },
+    viewSyllabusRewarded: {
+      id: 'view_syllabus_rewarded',
+      name: 'Before View Syllabus PDF',
+      format: 'rewarded',
+      adUnitId: '',
+      enabled: false,
+      freeUserOnly: true,
+    },
+  },
 };
 
 let memorySettings = { ...defaultAppSettings };

@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
-enum NjBadgeVariant { primary, secondary, softGreen, blue, amber, error, slate, purple }
+enum NjBadgeVariant {
+  primary,
+  secondary,
+  softGreen,
+  blue,
+  amber,
+  error,
+  slate,
+  purple
+}
 
 /// Pill Badge Component for Categories, Departments, and Tags (Specification 129)
 class NjBadge extends StatelessWidget {

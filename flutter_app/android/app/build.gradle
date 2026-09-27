@@ -56,22 +56,40 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
+        manifestPlaceholders += [
+            applicationName: "android.app.Application",
+            admobAppId: "ca-app-pub-3940256099942544~3347511713"
+        ]
     }
 
     signingConfigs {
+        debug {
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
         release {
             if (hasKeyProperties) {
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
                 storeFile file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
+                v1SigningEnabled true
+                v2SigningEnabled true
             }
         }
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders += [
+                admobAppId: "ca-app-pub-3940256099942544~3347511713"
+            ]
+        }
         release {
-            signingConfig hasKeyProperties ? signingConfigs.release : signingConfigs.debug
+            manifestPlaceholders += [
+                admobAppId: "ca-app-pub-2250115842376248~4003156277"
+            ]
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

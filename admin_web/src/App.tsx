@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ContentListPage } from './pages/ContentListPage';
 import { ContentEditorPage } from './pages/ContentEditorPage';
 import { CategoryManagerPage } from './pages/CategoryManagerPage';
+import { JobTypeManagerPage } from './pages/JobTypeManagerPage';
 import { HomepageManagerPage } from './pages/HomepageManagerPage';
 import { NotificationManagerPage } from './pages/NotificationManagerPage';
 import { SocialAndSupportPage } from './pages/SocialAndSupportPage';
@@ -153,7 +154,11 @@ export function App() {
   ) => {
     try {
       const id = await saveContent(item, currentUser?.email || 'Admin');
-      addToast('success', 'Content Saved Successfully', `Document ID: ${id}`);
+      if (item.status === 'published') {
+        addToast('success', 'Published successfully', 'Live in app');
+      } else {
+        addToast('success', 'Saved as draft', 'Not visible in user app');
+      }
 
       // Dispatch push if requested (Specification 153)
       if (sendPush && item.title) {
@@ -194,9 +199,25 @@ export function App() {
   };
 
   const handleTogglePublish = async (id: string, isPublished: boolean) => {
+    if (!isPublished) {
+      const confirmed = window.confirm(
+        'Unpublish this content?\n\nThis removes it from the user app without deleting it.'
+      );
+      if (!confirmed) return;
+    } else {
+      const confirmed = window.confirm(
+        'Publish this content?\n\nThis will make it available in the Notify Jobs app.'
+      );
+      if (!confirmed) return;
+    }
+
     try {
       await toggleContentPublish(id, isPublished);
-      addToast('success', isPublished ? 'Content Published Live' : 'Content Moved to Drafts');
+      if (isPublished) {
+        addToast('success', 'Published successfully', 'Live in app');
+      } else {
+        addToast('info', 'Content unpublished', 'No longer visible in app');
+      }
       const updated = await fetchContentList({});
       setContentList(updated);
     } catch (err: any) {
@@ -221,18 +242,28 @@ export function App() {
   };
 
   const handleSaveCategory = async (cat: Partial<Category>) => {
-    await saveCategory(cat);
-    addToast('success', 'Category updated');
-    const updated = await fetchCategories();
-    setCategories(updated);
+    try {
+      await saveCategory(cat);
+      addToast('success', 'Category updated successfully');
+      const updated = await fetchCategories();
+      setCategories(updated);
+    } catch (err) {
+      console.error('Failed to save category:', err);
+      addToast('error', 'Failed to save category', String(err));
+    }
   };
 
   const handleDeleteCategory = async (id: string) => {
     if (window.confirm('Delete category?')) {
-      await deleteCategory(id);
-      addToast('info', 'Category removed');
-      const updated = await fetchCategories();
-      setCategories(updated);
+      try {
+        await deleteCategory(id);
+        addToast('info', 'Category removed');
+        const updated = await fetchCategories();
+        setCategories(updated);
+      } catch (err) {
+        console.error('Failed to delete category:', err);
+        addToast('error', 'Failed to delete category', String(err));
+      }
     }
   };
 
@@ -280,6 +311,7 @@ export function App() {
     content_articles: 'Articles',
     // Admin features
     categories: 'Category Management',
+    job_types: 'Job & Employment Types',
     homepage: 'Homepage Layout Manager',
     notifications: 'Push Notification Hub',
     social_support: 'Social Channels & Support',
@@ -405,6 +437,9 @@ export function App() {
             onDeleteCategory={handleDeleteCategory}
           />
         );
+
+      case 'job_types':
+        return <JobTypeManagerPage />;
 
       case 'homepage':
         return (

@@ -338,6 +338,31 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
     );
   };
 
+  // Public visibility evaluator matching Flutter client specification
+  const checkLiveInApp = (item: ContentItem): { isLive: boolean; reason: string; label: string } => {
+    if (item.status === 'archived') {
+      return { isLive: false, reason: 'Archived post', label: 'ARCHIVED' };
+    }
+    if (item.status === 'draft') {
+      return { isLive: false, reason: 'Draft post — not published yet', label: 'DRAFT' };
+    }
+    if (item.isPublished !== true || item.status !== 'published') {
+      return { isLive: false, reason: 'Unpublished status', label: 'UNPUBLISHED' };
+    }
+    if (item.publishedAt) {
+      const pubDate = new Date(item.publishedAt);
+      if (pubDate.getTime() > Date.now()) {
+        return { isLive: false, reason: `Scheduled for ${pubDate.toLocaleString()}`, label: 'SCHEDULED' };
+      }
+    } else {
+      return { isLive: false, reason: 'Missing publishedAt timestamp', label: 'VISIBILITY ISSUE' };
+    }
+    if (!item.title || !item.title.trim()) {
+      return { isLive: false, reason: 'Missing title', label: 'VISIBILITY ISSUE' };
+    }
+    return { isLive: true, reason: 'Matches public client filters & rules', label: 'LIVE IN APP' };
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumbs & Header Bar */}
@@ -513,21 +538,19 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/85 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3.5 px-5 min-w-[280px]">Title &amp; Details</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Type</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Category</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Public Status</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Publish State</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Deadline / Date</th>
-                <th className="py-3.5 px-3 whitespace-nowrap">Updated</th>
-                <th className="py-3.5 px-3 text-right whitespace-nowrap">Views</th>
+                <th className="py-3.5 px-5 min-w-[280px]">Title &amp; Organization</th>
+                <th className="py-3.5 px-3 min-w-[180px]">Categories</th>
+                <th className="py-3.5 px-3 whitespace-nowrap text-center">Post Count</th>
+                <th className="py-3.5 px-3 whitespace-nowrap text-center">Total Vacancies</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">Updated Date</th>
                 <th className="py-3.5 px-5 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="max-w-sm mx-auto flex flex-col items-center gap-2.5">
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
                         <FileText className="w-6 h-6" />
@@ -555,8 +578,27 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                 </tr>
               ) : (
                 filteredItems.map((item) => {
-                  const firstCatId = item.categoryIds?.[0];
-                  const catName = firstCatId ? categoryMap.get(firstCatId) : null;
+                  const assignedCategoryNames: string[] = [];
+                  if (item.categoryNames && item.categoryNames.length > 0) {
+                    assignedCategoryNames.push(...item.categoryNames);
+                  } else if (item.categoryIds && item.categoryIds.length > 0) {
+                    item.categoryIds.forEach((id) => {
+                      const name = categoryMap.get(id);
+                      if (name) assignedCategoryNames.push(name);
+                      else assignedCategoryNames.push(id);
+                    });
+                  }
+
+                  const postCount = item.posts && item.posts.length > 0
+                    ? item.posts.length
+                    : item.vacanciesBreakdown && item.vacanciesBreakdown.length > 0
+                    ? item.vacanciesBreakdown.length
+                    : 1;
+
+                  const totalVacanciesDisplay =
+                    item.totalVacancies !== undefined && item.totalVacancies !== null && item.totalVacancies !== ''
+                      ? item.totalVacancies
+                      : item.vacancies || '—';
 
                   return (
                     <tr
@@ -572,83 +614,91 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                           {item.title}
                         </p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-medium truncate">
-                          <span>{item.organization || 'Notify Jobs'}</span>
+                          <span className="font-semibold text-slate-700">{item.organization || 'Notify Jobs'}</span>
                           {item.jobRole && (
                             <>
                               <span className="text-slate-300">•</span>
                               <span className="text-slate-600">{item.jobRole}</span>
                             </>
                           )}
-                          {item.vacancies && (
+                          {item.department && (
                             <>
                               <span className="text-slate-300">•</span>
-                              <span className="font-semibold text-slate-700">{item.vacancies} Posts</span>
+                              <span className="text-slate-500">{item.department}</span>
                             </>
                           )}
                         </div>
                       </td>
 
-                      {/* Content Type */}
-                      <td className="py-3.5 px-3 whitespace-nowrap">
-                        {renderContentTypeBadge(item)}
-                      </td>
-
-                      {/* Category */}
-                      <td className="py-3.5 px-3 whitespace-nowrap text-xs text-slate-600 font-medium">
-                        {catName ? (
-                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                            {catName}
-                          </span>
+                      {/* Categories (Rendered as Multiple Chips per Part 27) */}
+                      <td className="py-3.5 px-3">
+                        {assignedCategoryNames.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 max-w-[240px]">
+                            {assignedCategoryNames.map((cName, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 rounded-md bg-emerald-50 text-[#159B76] border border-emerald-200/60 font-semibold text-[10px]"
+                              >
+                                {cName}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="text-slate-300 text-xs">—</span>
                         )}
                       </td>
 
-                      {/* Public Status */}
-                      <td className="py-3.5 px-3 whitespace-nowrap">
-                        {renderPublicStatusBadge(item)}
+                      {/* Post Count */}
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                          {postCount} {postCount === 1 ? 'Post' : 'Posts'}
+                        </span>
                       </td>
 
-                      {/* Publish State */}
-                      <td className="py-3.5 px-3 whitespace-nowrap">
-                        {item.status === 'published' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            Published
-                          </span>
-                        ) : item.status === 'draft' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            Draft
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                            <Archive className="w-3 h-3 text-slate-500" />
-                            Archived
-                          </span>
-                        )}
+                      {/* Total Vacancies */}
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {totalVacanciesDisplay}
+                        </span>
                       </td>
 
-                      {/* Deadline / Exam Date */}
-                      <td className="py-3.5 px-3 whitespace-nowrap text-xs text-slate-600 font-medium">
-                        {item.applicationLastDate ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400" />
-                            {item.applicationLastDate}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
+                      {/* Status */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <div className="flex flex-col gap-1 items-start">
+                          {item.status === 'published' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              Published
+                            </span>
+                          ) : item.status === 'draft' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              Draft
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                              <Archive className="w-3 h-3 text-slate-500" />
+                              Archived
+                            </span>
+                          )}
+                          {(() => {
+                            const vis = checkLiveInApp(item);
+                            if (vis.isLive) {
+                              return (
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                  LIVE
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </td>
 
                       {/* Updated Date */}
-                      <td className="py-3.5 px-3 whitespace-nowrap text-xs text-slate-400">
+                      <td className="py-3.5 px-3 whitespace-nowrap text-xs text-slate-500 font-medium">
                         {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '—'}
-                      </td>
-
-                      {/* Views */}
-                      <td className="py-3.5 px-3 text-right whitespace-nowrap text-xs font-semibold text-slate-600">
-                        {(item.views || 0).toLocaleString()}
                       </td>
 
                       {/* Actions */}

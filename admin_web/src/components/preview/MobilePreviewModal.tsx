@@ -12,6 +12,11 @@ import {
   X,
   Clock,
   Briefcase,
+  FileText,
+  CheckCircle2,
+  HelpCircle,
+  ShieldCheck,
+  BookOpen,
 } from 'lucide-react';
 import { ContentItem } from '../../types';
 import { calculateJobStatus } from '../../services/contentService';
@@ -158,7 +163,7 @@ export const MobilePreviewModal: React.FC<MobilePreviewModalProps> = ({
           ) : (
             <div className="flex-1 overflow-y-auto flex flex-col">
               {/* Detail Screen Header */}
-              <div className="sticky top-0 bg-white/95 backdrop-blur px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="sticky top-0 bg-white/95 backdrop-blur px-4 py-3 border-b border-slate-100 flex items-center justify-between z-10">
                 <button
                   onClick={() => setTab('card')}
                   className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-600"
@@ -257,6 +262,96 @@ export const MobilePreviewModal: React.FC<MobilePreviewModalProps> = ({
                   </div>
                 )}
 
+                {/* Structured Posts Vacancy Breakup */}
+                {item.posts && item.posts.length > 0 && (
+                  <div className="bg-white rounded-2xl p-3.5 border border-slate-200 space-y-2">
+                    <h5 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#159B76]" /> Post-wise Vacancies
+                    </h5>
+                    <div className="space-y-2">
+                      {item.posts.map((p, idx) => (
+                        <div key={p.id || idx} className="p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                          <div className="flex justify-between items-start">
+                            <span className="font-bold text-slate-900">{p.postName}</span>
+                            <span className="text-[10px] bg-[#159B76]/10 text-[#159B76] font-bold px-1.5 py-0.5 rounded">
+                              {p.vacancies?.total || 0} Vacancies
+                            </span>
+                          </div>
+                          {p.group && <span className="text-[10px] text-slate-500 block mt-0.5">{p.group} • {p.payLevel || 'Pay Level TBA'}</span>}
+                          {p.qualification && (
+                            <p className="text-[11px] text-slate-600 mt-1 line-clamp-2">
+                              {p.qualification}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Required Documents */}
+                {item.documents && item.documents.length > 0 && (
+                  <div className="bg-white rounded-2xl p-3.5 border border-slate-200 space-y-2">
+                    <h5 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-[#159B76]" /> Documents Required
+                    </h5>
+                    <div className="space-y-1 text-xs">
+                      {item.documents.map((doc, idx) => (
+                        <div key={doc.id || idx} className="flex items-center justify-between py-1 border-b border-slate-50 last:border-none text-[11px]">
+                          <span className="text-slate-700 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            {doc.documentName}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${doc.required ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                            {doc.required ? 'Mandatory' : 'Optional'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Exam Details & Syllabus */}
+                {(item.examDetails?.hasExam || (item.syllabusTopics && item.syllabusTopics.length > 0)) && (
+                  <div className="bg-white rounded-2xl p-3.5 border border-slate-200 space-y-2">
+                    <h5 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-[#159B76]" /> Exam & Syllabus
+                    </h5>
+                    {item.examDetails?.hasExam && (
+                      <div className="text-[11px] space-y-1 text-slate-600">
+                        {item.examDetails.examMode && <div><strong>Mode:</strong> {item.examDetails.examMode}</div>}
+                        {item.examDetails.examDuration && <div><strong>Duration:</strong> {item.examDetails.examDuration}</div>}
+                        {item.examDetails.negativeMarking && <div><strong>Negative Marking:</strong> {item.examDetails.negativeMarking}</div>}
+                      </div>
+                    )}
+                    {item.syllabusTopics && item.syllabusTopics.length > 0 && (
+                      <div className="pt-1 border-t border-slate-100 text-[11px]">
+                        <span className="text-slate-400 block text-[10px]">Syllabus Topics ({item.syllabusTopics.length})</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.syllabusTopics.slice(0, 4).map((top, idx) => (
+                            <span key={top.id || idx} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px]">
+                              {top.topicName}
+                            </span>
+                          ))}
+                          {item.syllabusTopics.length > 4 && (
+                            <span className="text-[10px] text-slate-400">+{item.syllabusTopics.length - 4} more</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Source Verification Badge */}
+                {item.sourceVerification?.sourceVerified && (
+                  <div className="bg-emerald-50 rounded-xl p-2.5 border border-emerald-100 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="text-[10px] text-emerald-800">
+                      <strong>Reviewed by Notify Jobs:</strong> Cross-verified with official government notification.
+                    </div>
+                  </div>
+                )}
+
                 {/* Important Links */}
                 <div className="space-y-2 pt-1">
                   {item.applyUrl && (
@@ -286,3 +381,5 @@ export const MobilePreviewModal: React.FC<MobilePreviewModalProps> = ({
     </div>
   );
 };
+
+

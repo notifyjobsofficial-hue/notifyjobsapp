@@ -9,6 +9,7 @@ import '../../core/widgets/nj_badge.dart';
 import '../../core/widgets/nj_button.dart';
 import '../../core/widgets/nj_card.dart';
 import '../../core/widgets/nj_empty_state.dart';
+import '../../core/widgets/nj_markdown_view.dart';
 import '../../core/widgets/nj_section_header.dart';
 import '../../core/widgets/nj_share_sheet.dart';
 
@@ -26,14 +27,18 @@ class ArticleDetailScreen extends ConsumerWidget {
       return;
     }
     final uri = Uri.tryParse(urlString.trim());
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open external link.')),
-        );
-      }
+    if (uri != null) {
+      try {
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      } catch (_) {}
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open external link.')),
+      );
     }
   }
 
@@ -129,6 +134,23 @@ class ArticleDetailScreen extends ConsumerWidget {
                           .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
+                  if (item.views > 0) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.remove_red_eye_outlined,
+                            size: 13, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${item.views} views',
+                          style: AppTypography.caption.copyWith(
+                            fontSize: 11,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -154,7 +176,7 @@ class ArticleDetailScreen extends ConsumerWidget {
                   title: 'Instructions & Details',
                   icon: Icons.checklist_rounded),
               NjCard(
-                child: Text(item.body, style: AppTypography.bodyMedium),
+                child: NjMarkdownView(data: item.body),
               ),
               const SizedBox(height: 20),
             ],

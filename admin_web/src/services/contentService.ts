@@ -102,11 +102,17 @@ export async function fetchContentList(options: {
 }): Promise<ContentItem[]> {
   try {
     const contentRef = collection(db, COLLECTION_NAME);
-    let q = query(contentRef, orderBy('updatedAt', 'desc'), limit(options.limitCount || 100));
-
-    if (options.status && options.status !== 'all') {
-      q = query(contentRef, where('status', '==', options.status), limit(options.limitCount || 100));
-    }
+    // Build query preserving orderBy. When status filter is applied, it is included
+    // alongside orderBy. Both (status, updatedAt) fields are indexed via Firestore
+    // auto-indexing for single-field and we fall back to client-side sort if needed.
+    let q = options.status && options.status !== 'all'
+      ? query(
+          contentRef,
+          where('status', '==', options.status),
+          orderBy('updatedAt', 'desc'),
+          limit(options.limitCount || 100)
+        )
+      : query(contentRef, orderBy('updatedAt', 'desc'), limit(options.limitCount || 100));
 
     const snapshot = await getDocs(q);
     let items: ContentItem[] = [];
@@ -180,6 +186,7 @@ export async function saveContent(
     salary: content.salary || '',
     location: content.location || '',
     jobType: content.jobType || 'Regular Govt',
+    showInLiveUpdates: content.showInLiveUpdates === true,
 
     applicationStartDate: content.applicationStartDate || '',
     applicationLastDate: content.applicationLastDate || '',

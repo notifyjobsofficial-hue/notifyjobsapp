@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Squircle Background (#0B2C5F) -->
+    <path
+        android:fillColor="#0B2C5F"
+        android:pathData="M32,10 L88,10 C100,10 110,20 110,32 L110,88 C110,100 100,110 88,110 L32,110 C20,110 10,100 10,88 L10,32 C10,20 20,10 32,10 Z" />
+
+    <!-- Monogram Group (Centered in 120x120) -->
+    <group
+        android:translateX="10"
+        android:translateY="10">
+        <!-- Left N Pillar -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M26,30.5 C26,29.1 27.1,28 28.5,28 L32.5,28 C33.9,28 35,29.1 35,30.5 L35,69.5 C35,70.9 33.9,72 32.5,72 L28.5,72 C27.1,72 26,70.9 26,69.5 Z" />
+        
+        <!-- Emerald Green Dynamic Diagonal -->
+        <path
+            android:fillColor="#159B76"
+            android:pathData="M27,30 L57,64 L57,53 L36,28 Z" />
+
+        <!-- J Pillar and Loop -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M51,28 L60,28 L60,58 C60,64.6 54.6,72 48,72 C44,72 40.4,70 38.2,66.8 L42.2,60.8 C43.4,62.4 45.4,64 48,64 C50.6,64 53,62 53,58 L53,28 Z" />
+
+        <!-- Vibrant Orange Notification Spark / Dot -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M70,28 A6.5,6.5 0 1,0 83,28 A6.5,6.5 0 1,0 70,28 Z" />
+
+        <!-- Orange Dot Highlight -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.6"
+            android:pathData="M68.5,26.5 A2,2 0 1,0 72.5,26.5 A2,2 0 1,0 68.5,26.5 Z" />
+    </group>
+</vector>

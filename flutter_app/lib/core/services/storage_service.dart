@@ -9,6 +9,7 @@ class StorageService {
   static const String _keyThemeMode = 'nj_theme_mode_v1';
   static const String _keySubscribedTopics = 'nj_subscribed_topics_v1';
   static const String _keyRecentViews = 'nj_recent_views_v1';
+  static const String _keyIsProUser = 'nj_is_pro_user_v1';
 
   final SharedPreferences _prefs;
 
@@ -171,5 +172,106 @@ class StorageService {
     }
     map[contentId] = DateTime.now().millisecondsSinceEpoch;
     await _prefs.setString(_keyRecentViews, jsonEncode(map));
+  }
+
+  // --- PRO MEMBERSHIP / AD REMOVAL ---
+  bool isProUser() {
+    return _prefs.getBool(_keyIsProUser) ?? false;
+  }
+
+  Future<bool> setProUser(bool value) async {
+    return _prefs.setBool(_keyIsProUser, value);
+  }
+
+  // --- USER PREFERENCES & ONBOARDING (Phase 3) ---
+  static const String _keyOnboardingCompleted = 'nj_onboarding_completed_v1';
+  static const String _keyTargetExams = 'nj_target_exams_v1';
+  static const String _keyQualification = 'nj_user_qualification_v1';
+  static const String _keyLocationPreference = 'nj_location_preference_v1';
+
+  bool hasCompletedOnboarding() {
+    return _prefs.getBool(_keyOnboardingCompleted) ?? false;
+  }
+
+  Future<bool> setCompletedOnboarding(bool completed) async {
+    return _prefs.setBool(_keyOnboardingCompleted, completed);
+  }
+
+  List<String> getTargetExams() {
+    return _prefs.getStringList(_keyTargetExams) ?? ['All Govt Jobs'];
+  }
+
+  Future<bool> setTargetExams(List<String> exams) async {
+    return _prefs.setStringList(_keyTargetExams, exams);
+  }
+
+  String getQualification() {
+    return _prefs.getString(_keyQualification) ?? 'Graduate';
+  }
+
+  Future<bool> setQualification(String qualification) async {
+    return _prefs.setString(_keyQualification, qualification);
+  }
+
+  String getLocationPreference() {
+    return _prefs.getString(_keyLocationPreference) ?? 'Both';
+  }
+
+  Future<bool> setLocationPreference(String location) async {
+    return _prefs.setString(_keyLocationPreference, location);
+  }
+
+  // --- NOTIFICATION UNREAD ARCHITECTURE ---
+  static const String _keyNotificationInitialized =
+      'nj_notification_initialized_v2';
+  static const String _keyLastSeenNotificationAt =
+      'nj_last_seen_notification_at_v2';
+  static const String _keyReadNotificationIds = 'nj_read_notification_ids_v2';
+  static const String _keyClearedNotificationIds =
+      'nj_cleared_notification_ids_v2';
+
+  bool isNotificationInitialized() {
+    return _prefs.getBool(_keyNotificationInitialized) ?? false;
+  }
+
+  Future<bool> setNotificationInitialized(bool initialized) async {
+    return _prefs.setBool(_keyNotificationInitialized, initialized);
+  }
+
+  String? getLastSeenNotificationAt() {
+    return _prefs.getString(_keyLastSeenNotificationAt);
+  }
+
+  Future<bool> setLastSeenNotificationAt(String isoTimestamp) async {
+    return _prefs.setString(_keyLastSeenNotificationAt, isoTimestamp);
+  }
+
+  List<String> getReadNotificationIds() {
+    return _prefs.getStringList(_keyReadNotificationIds) ?? [];
+  }
+
+  Future<bool> markNotificationRead(String id) async {
+    final list = getReadNotificationIds();
+    if (!list.contains(id)) {
+      list.add(id);
+      return _prefs.setStringList(_keyReadNotificationIds, list);
+    }
+    return true;
+  }
+
+  Future<bool> markNotificationsRead(Iterable<String> ids) async {
+    final set = getReadNotificationIds().toSet();
+    set.addAll(ids);
+    return _prefs.setStringList(_keyReadNotificationIds, set.toList());
+  }
+
+  List<String> getClearedNotificationIds() {
+    return _prefs.getStringList(_keyClearedNotificationIds) ?? [];
+  }
+
+  Future<bool> clearAllNotifications(Iterable<String> ids) async {
+    final set = getClearedNotificationIds().toSet();
+    set.addAll(ids);
+    return _prefs.setStringList(_keyClearedNotificationIds, set.toList());
   }
 }

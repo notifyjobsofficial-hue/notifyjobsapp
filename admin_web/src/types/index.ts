@@ -8,9 +8,23 @@ export type ContentType =
   | 'syllabus'
   | 'admission'
   | 'scheme'
-  | 'article';
+  | 'article'
+  | 'announcement'
+  | 'quick_update';
 
-export type JobType = 'government' | 'private';
+export type JobType = 'government' | 'private' | string;
+
+export interface JobTypeItem {
+  id: string;
+  name: string;
+  shortName: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  order: number;
+  isActive: boolean;
+  colorToken?: string;
+}
 
 export type ContentStatus = 'draft' | 'published' | 'archived';
 
@@ -31,17 +45,62 @@ export interface VacancyItem {
   payLevel?: string;
 }
 
+export interface VacancyBreakup {
+  ur: number;
+  obc: number;
+  ews: number;
+  sc: number;
+  st: number;
+  pwbd: number;
+  esm?: number;
+  msp?: number;
+  other: number;
+  total: number;
+}
+
+export interface PostItem {
+  id: string;
+  postName: string;
+  postCode?: string;
+  group?: string;
+  cadre?: string;
+  department?: string;
+  categoryId?: string;
+  categoryName?: string;
+  qualification?: string;
+  qualificationDetails?: string;
+  desirableQualification?: string;
+  location?: string;
+  jobType?: string;
+  payLevel?: string;
+  payScale?: string;
+  salaryMin?: number | string;
+  salaryMax?: number | string;
+  salaryText?: string;
+  ageMin?: number | string;
+  ageMax?: number | string;
+  maleMaxAge?: number | string;
+  femaleMaxAge?: number | string;
+  ageAsOn?: string;
+  ageRelaxation?: string;
+  vacancies: VacancyBreakup;
+}
+
 export interface AgeLimitItem {
   id: string;
   category: string;
   relaxationYears: string;
   maxAge?: string;
+  maximumAgeOverride?: string;
+  notes?: string;
 }
 
 export interface ApplicationFeeItem {
   id: string;
   category: string;
   fee: string;
+  currency?: string;
+  notes?: string;
   paymentMode?: string;
 }
 
@@ -50,14 +109,106 @@ export interface SelectionStepItem {
   stageNumber: number;
   name: string;
   description: string;
+  mandatory?: boolean;
+}
+
+export interface SelectionRules {
+  selectionBasis?: string;
+  meritCalculation?: string;
+  qualifyingCriteria?: string;
+  documentVerificationRule?: string;
+  waitingListRule?: string;
+  reservationRule?: string;
+  tieBreakingRules?: string[];
+}
+
+export interface DocumentItem {
+  id: string;
+  documentName: string;
+  required: boolean;
+  notes?: string;
+}
+
+export interface UploadRequirements {
+  photographFormat?: string;
+  photographMaxSize?: string;
+  signatureFormat?: string;
+  signatureMaxSize?: string;
+  certificateFormat?: string;
+  certificateMaxSize?: string;
+}
+
+export interface ExamDetails {
+  hasExam: boolean;
+  examMode?: string;
+  examType?: string;
+  examCentre?: string;
+  examLocation?: string;
+  examLanguage?: string;
+  examDuration?: string;
+  negativeMarking?: string;
+  minimumQualifyingMarks?: string;
+  admitCardMethod?: string;
 }
 
 export interface ExamPatternItem {
   id: string;
+  paperName?: string;
   subject: string;
   questions: string | number;
   marks: string | number;
   duration?: string;
+  negativeMarking?: string;
+  minimumQualifyingMarks?: string;
+  notes?: string;
+}
+
+export interface SyllabusTopicItem {
+  id: string;
+  subject?: string;
+  topicName: string;
+  details?: string;
+}
+
+export interface SyllabusPostItem {
+  postId?: string;
+  postName?: string;
+  syllabusTitle?: string;
+  topics: string[];
+  syllabusPdfUrl?: string;
+}
+
+export interface SourceVerification {
+  sourceOrg?: string;
+  notificationNumber?: string;
+  gazetteNumber?: string;
+  circularNumber?: string;
+  sourcePdfUrl?: string;
+  sourceWebsiteUrl?: string;
+  sourcePublishedDate?: string;
+  sourceLanguage?: string;
+  sourceVerified?: boolean;
+}
+
+export interface AppDisplayControls {
+  showOverview?: boolean;
+  showImportantDates?: boolean;
+  showPosts?: boolean;
+  showVacancies?: boolean;
+  showQualification?: boolean;
+  showAgeLimit?: boolean;
+  showFees?: boolean;
+  showSalary?: boolean;
+  showApplicationProcess?: boolean;
+  showDocuments?: boolean;
+  showExamDetails?: boolean;
+  showExamPattern?: boolean;
+  showSyllabus?: boolean;
+  showSelectionProcess?: boolean;
+  showImportantLinks?: boolean;
+  showFAQ?: boolean;
+  showSourceInformation?: boolean;
+  showDisclaimer?: boolean;
 }
 
 export interface ImportantLinkItem {
@@ -88,10 +239,80 @@ export interface ContentItem {
   jobRole: string;
   vacancies: string;
   qualification: string;
+  qualificationDetails?: string;
   salary: string;
   location: string;
   jobType?: 'government' | 'private' | string;
+  jobTypeId?: string;
+  jobTypeName?: string;
   showInLiveUpdates?: boolean;
+  showOnHome?: boolean;
+
+  // Structured Recruitment Model (v1.2)
+  vacancyMode?: 'simple' | 'detailed';
+  totalVacancies?: number | string;
+  posts?: PostItem[];
+  categoryNames?: string[];
+  howToApplySteps?: string[];
+  feePaymentLastDate?: string;
+  correctionStartDate?: string;
+  correctionEndDate?: string;
+
+  // One-Stop Recruitment Enhancements
+  recruitmentYear?: string;
+  notificationNumber?: string;
+  advtNumber?: string;
+  recruitmentType?: string;
+  officialLanguage?: string;
+  minimumQualification?: string;
+  eligibilitySummary?: string;
+  experienceRequired?: string;
+  nationality?: string;
+  registrationRequirement?: string;
+  otherEligibility?: string;
+  defaultMinimumAge?: string | number;
+  defaultMaximumAge?: string | number;
+  ageAsOn?: string;
+  payLevel?: string;
+  payScale?: string;
+  salaryMin?: number | string;
+  salaryMax?: number | string;
+  salaryText?: string;
+  applicationMode?: string;
+  registrationRequired?: boolean;
+  oneTimeRegistration?: boolean;
+  applicationInstructions?: string;
+
+  // Repeatable modules
+  documents?: DocumentItem[];
+  uploadRequirements?: UploadRequirements;
+  examDetails?: ExamDetails;
+  syllabusTopics?: SyllabusTopicItem[];
+  syllabusPosts?: SyllabusPostItem[];
+  syllabusPdfUrl?: string;
+  selectionRules?: SelectionRules;
+  tieBreakingRules?: string[];
+  ageRelaxations?: AgeLimitItem[];
+  appDisplayControls?: AppDisplayControls;
+  sourceVerification?: SourceVerification;
+
+  // Visibility & Placement Controls
+  showInUserApp?: boolean;
+  featured?: boolean;
+  urgent?: boolean;
+  showInLatestJobs?: boolean;
+  showInAndamanSection?: boolean;
+  showInClosingSoon?: boolean;
+  showInSearch?: boolean;
+  allowNotifications?: boolean;
+
+  // Content-type specific modules & Parent Recruitment Link
+  parentRecruitmentId?: string;
+  parentRecruitmentTitle?: string;
+  pressNoteUrl?: string;
+  syllabusUrl?: string;
+  admitCardUrl?: string;
+  resultUrl?: string;
 
   // Private / Andaman specific fields
   companyName?: string;
@@ -113,6 +334,35 @@ export interface ContentItem {
   applicationLastDate?: string;
   statusOverride?: StatusOverride;
 
+  // Exam Update Specifics (Admit Card, Result, Answer Key, Syllabus)
+  examDate?: string;
+  admitCardReleaseDate?: string;
+  reportingTime?: string;
+  examCenterInfo?: string;
+  resultDate?: string;
+  answerKeyReleaseDate?: string;
+  objectionStartDate?: string;
+  objectionLastDate?: string;
+  objectionFee?: string;
+  instructions?: string;
+  updateStatus?: string;
+
+  // Editorial Article specifics
+  articleCategory?: string;
+  authorName?: string;
+  readingTimeMinutes?: number;
+
+  // Announcement / Notice specifics
+  announcementPriority?: 'general' | 'important' | 'urgent' | 'new';
+  announcementStartAt?: string;
+  announcementEndAt?: string;
+  ctaLabel?: string;
+  isDismissible?: boolean;
+
+  // Quick Update alert specifics
+  alertType?: string;
+  expiresAt?: string;
+
   // Official links
   officialWebsiteUrl?: string;
   officialNotificationUrl?: string;
@@ -132,11 +382,16 @@ export interface ContentItem {
   sourceOrg?: string;
   sourceUrl?: string;
   lastVerifiedAt?: string;
+  isReviewed?: boolean;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  customSectionHeadings?: Record<string, string>;
 
   // Status & meta
   status: ContentStatus;
   isPublished: boolean;
   publishedAt?: string;
+  scheduledPublishAt?: string;
   updatedAt?: string;
   createdAt?: string;
   createdBy?: string;
@@ -154,11 +409,21 @@ export interface ContentItem {
 export interface Category {
   id: string;
   name: string;
+  shortName?: string;
   slug: string;
   icon: string;
   color: string;
   order: number;
   isActive: boolean;
+  showOnHome?: boolean;
+  showInUserApp?: boolean;
+  showInQuickCategories?: boolean;
+  showInJobsFilters?: boolean;
+  showInUpdates?: boolean;
+  showInSearch?: boolean;
+  showInAdminSidebar?: boolean;
+  destination?: string;
+  contentScope?: 'job' | 'update' | 'article' | 'all';
 }
 
 export interface HomepageSection {
@@ -204,7 +469,18 @@ export interface AppSettings {
   disclaimerUrl: string;
   contactUrl: string;
 
+  // Central Ad Controls (Part 13)
+  adsEnabled?: boolean;
   rewardedAdsEnabled: boolean;
+  supportRewardedEnabled?: boolean;
+  applyRewardedEnabled?: boolean;
+  notificationDownloadRewardedEnabled?: boolean;
+  officialWebsiteRewardedEnabled?: boolean;
+  allowSkipRewarded?: boolean;
+  rewardedCooldownMinutes?: number;
+  rewardedAdUnitAndroid?: string;
+  testMode?: boolean;
+
   rewardNotificationEnabled: boolean;
   rewardUnlockMinutes: number;
   rewardPromptText: string;
@@ -255,6 +531,57 @@ export interface AppSettings {
   supportPageEnabled: boolean;
   notificationPreferencesEnabled: boolean;
   socialSectionEnabled: boolean;
+
+  // NEW Badge duration in days
+  newBadgeDurationDays: number;
+
+  // Additional dynamic section titles & subtitles
+  andamanJobsTitle: string;
+  andamanJobsSubtitle: string;
+  importantUpdatesTitle: string;
+  importantUpdatesSubtitle: string;
+  articlesTitle: string;
+  articlesSubtitle: string;
+
+  // Merged Support & Ad-Free Settings
+  supportPageHeading: string;
+  supportPageSubtitle: string;
+  adFreeProductLabel: string;
+  adFreeProductDescription: string;
+  adFreeProductId: string;
+  supportProducts: SupportProductItem[];
+  thankYouMessage: string;
+
+  // Safe Predefined Ad Slots
+  adSlots: AdSlotsConfig;
+}
+
+export interface SupportProductItem {
+  id: string;
+  label: string;
+  description: string;
+  productId: string;
+  order: number;
+  enabled: boolean;
+  isRecommended?: boolean;
+  icon?: string;
+}
+
+export interface AdSlotItem {
+  id: string;
+  name: string;
+  format: 'rewarded';
+  adUnitId: string;
+  enabled: boolean;
+  freeUserOnly: boolean;
+}
+
+export interface AdSlotsConfig {
+  officialNotificationRewarded: AdSlotItem;
+  downloadAdmitCardRewarded?: AdSlotItem;
+  viewResultRewarded?: AdSlotItem;
+  viewAnswerKeyRewarded?: AdSlotItem;
+  viewSyllabusRewarded?: AdSlotItem;
 }
 
 export interface AdminUser {
