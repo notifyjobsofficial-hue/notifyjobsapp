@@ -13,6 +13,11 @@ class AppColors {
   static const Color royalBlue = Color(0xFF1D4ED8);
   static const Color secondarySoft = Color(0xFFEFF6FF);
 
+  // Official Notify Jobs Brand Orange Accent
+  static const Color brandOrange = Color(0xFFFF5A00);
+  static const Color brandOrangeLight = Color(0xFFFFF0EB);
+  static const Color brandOrangeDark = Color(0xFFE04E00);
+
   // Neutral Palette (Light)
   static const Color background = Color(0xFFF6F8FC);
   static const Color surface = Color(0xFFFFFFFF);

@@ -139,7 +139,7 @@ class _HomeHeader extends ConsumerWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
-                    'assets/icons/app_logo.png',
+                    'assets/branding/notify_jobs_logo_compact.png',
                     width: 36,
                     height: 36,
                     fit: BoxFit.cover,

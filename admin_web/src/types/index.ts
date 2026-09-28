@@ -190,6 +190,58 @@ export interface SourceVerification {
   sourceVerified?: boolean;
 }
 
+export interface PhysicalStandardItem {
+  id: string;
+  category: string;
+  gender: 'male' | 'female' | 'all';
+  height?: string;
+  chest?: string;
+  chestExpanded?: string;
+  weight?: string;
+  notes?: string;
+}
+
+export interface PETEventItem {
+  id: string;
+  eventName: string;
+  gender: 'male' | 'female' | 'all';
+  standard: string;
+  qualifyingTime?: string;
+  notes?: string;
+}
+
+export interface TradeTestItem {
+  id: string;
+  postOrTrade: string;
+  testName: string;
+  duration?: string;
+  qualifyingMarks?: string;
+  criteria: string;
+}
+
+export interface MedicalStandardItem {
+  id: string;
+  stage: 'DME' | 'RME' | 'General';
+  standardName: string;
+  criteria: string;
+  eyesightStandard?: string;
+}
+
+export interface DeputationConditions {
+  parentDepartment?: string;
+  minimumServiceYears?: string;
+  deputationTenure?: string;
+  maximumAge?: string;
+  forwardingRules?: string;
+  coolingOffPeriod?: string;
+}
+
+export interface OtherConditionItem {
+  id: string;
+  title: string;
+  description: string;
+}
+
 export interface AppDisplayControls {
   showOverview?: boolean;
   showImportantDates?: boolean;
@@ -204,11 +256,17 @@ export interface AppDisplayControls {
   showExamDetails?: boolean;
   showExamPattern?: boolean;
   showSyllabus?: boolean;
+  showPhysicalStandards?: boolean;
+  showPETPST?: boolean;
+  showTradeTest?: boolean;
+  showMedicalStandards?: boolean;
+  showDeputationConditions?: boolean;
   showSelectionProcess?: boolean;
   showImportantLinks?: boolean;
   showFAQ?: boolean;
   showSourceInformation?: boolean;
   showDisclaimer?: boolean;
+  showOtherConditions?: boolean;
 }
 
 export interface ImportantLinkItem {
@@ -257,6 +315,10 @@ export interface ContentItem {
   feePaymentLastDate?: string;
   correctionStartDate?: string;
   correctionEndDate?: string;
+  notificationDate?: string;
+  admitCardDate?: string;
+  answerKeyDate?: string;
+  paymentMethods?: string[];
 
   // One-Stop Recruitment Enhancements
   recruitmentYear?: string;
@@ -295,6 +357,27 @@ export interface ContentItem {
   ageRelaxations?: AgeLimitItem[];
   appDisplayControls?: AppDisplayControls;
   sourceVerification?: SourceVerification;
+
+  // Optional Structured Modules (Smart Universal Editor)
+  physicalStandards?: PhysicalStandardItem[];
+  petEvents?: PETEventItem[];
+  tradeTests?: TradeTestItem[];
+  medicalStandards?: MedicalStandardItem[];
+  deputationConditions?: DeputationConditions;
+  serviceRequirements?: string;
+  reservationNotes?: string[];
+  probationPeriod?: string;
+  trainingPeriod?: string;
+  serviceBond?: string;
+  otherConditions?: OtherConditionItem[];
+  enabledOptionalModules?: string[];
+
+  // Exam & Selection Smart Toggles
+  hasExamination?: boolean;
+  hasPhysicalTest?: boolean;
+  hasTradeTest?: boolean;
+  hasInterview?: boolean;
+  hasMedicalExam?: boolean;
 
   // Visibility & Placement Controls
   showInUserApp?: boolean;

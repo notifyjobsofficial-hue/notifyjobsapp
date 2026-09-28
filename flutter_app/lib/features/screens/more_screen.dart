@@ -47,18 +47,93 @@ class MoreScreen extends ConsumerWidget {
   }
 
   void _showAboutDialog(BuildContext context, dynamic settings) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('About Notify Jobs'),
-        content: Text(
-          'Notify Jobs is a standalone, aspirant-focused mobile application built to provide instantaneous alerts for Indian government jobs, exam results, admit cards, and answer keys.\n\nAll official links open directly to authorized recruitment portals.',
-          style: AppTypography.body.copyWith(fontSize: 13, height: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.brandOrange.withOpacity(0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'assets/branding/notify_jobs_icon.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'NOTIFY ',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : const Color(0xFF111111),
+                  ),
+                ),
+                Text(
+                  'JOBS',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                    color: AppColors.brandOrange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Government Job Alerts & Exam Updates',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Notify Jobs is a standalone, aspirant-focused mobile application built to provide instantaneous alerts for Indian government jobs, exam results, admit cards, and answer keys.\n\nAll official links open directly to authorized recruitment portals.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body.copyWith(
+                fontSize: 12.5,
+                height: 1.45,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.secondaryText,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: const Text('Close',
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

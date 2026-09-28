@@ -3,15 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 
-/// Screen 1: Splash Screen
-/// Visual direction matching approved mockup:
-/// - Vertical navy gradient (#051026 -> #0B2C5F)
-/// - Center golden dome logo emblem with ambient glow
-/// - "NOTIFY JOBS" + "Government Jobs & Exam Updates"
-/// - "Andaman & All India" badge
-/// - Bottom "Your Future • Our Updates" with slim royal blue progress bar
+/// Screen 1: Official Notify Jobs Splash Screen
+/// Visual direction matching approved visual design:
+/// - Clean white/light canvas with subtle government watermark & smooth orange wave curves
+/// - Official Notify Jobs logo (bell squircle badge + bold NJ + "NOTIFY JOBS")
+/// - Orange accent divider bar + "Government Job Alerts & Exam Updates"
+/// - Fast, lightweight startup transition directly to Home
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -31,7 +29,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 600),
     );
 
     _fadeAnim = CurvedAnimation(
@@ -39,7 +37,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       curve: Curves.easeOutCubic,
     );
 
-    _scaleAnim = Tween<double>(begin: 0.88, end: 1.0).animate(
+    _scaleAnim = Tween<double>(begin: 0.94, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeOutBack,
@@ -48,7 +46,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _controller.forward();
 
-    _navTimer = Timer(const Duration(milliseconds: 1400), () {
+    // Fast transition to Home without artificial delay
+    _navTimer = Timer(const Duration(milliseconds: 1100), () {
       _navigateNext();
     });
   }
@@ -68,208 +67,116 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: InkWell(
         onTap: _navigateNext,
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF030A19),
-                Color(0xFF06142E),
-                Color(0xFF0B2C5F),
-              ],
-              stops: [0.0, 0.45, 1.0],
-            ),
-          ),
+        child: SizedBox.expand(
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Subtle background ambient radial glow
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.28,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    width: 260,
-                    height: 260,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.royalBlue.withOpacity(0.24),
-                          const Color(0xFFF59E0B).withOpacity(0.08),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.55, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
+              // 1. High-fidelity Splash Background with government silhouette and orange curves
+              Image.asset(
+                'assets/branding/splash_bg.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
               ),
 
-              // Center Brand Content
+              // 2. Center Branding Content with smooth entrance animation
               Center(
                 child: FadeTransition(
                   opacity: _fadeAnim,
                   child: ScaleTransition(
                     scale: _scaleAnim,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Golden Dome Logo emblem with layered borders and glow
-                        Container(
-                          width: 92,
-                          height: 92,
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFFFE082),
-                                Color(0xFFF59E0B),
-                                Color(0xFFB45309),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Official Notify Jobs Icon Badge
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      AppColors.brandOrange.withOpacity(0.18),
+                                  blurRadius: 28,
+                                  offset: const Offset(0, 10),
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    const Color(0xFFF59E0B).withOpacity(0.35),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                              BoxShadow(
-                                color: AppColors.royalBlue.withOpacity(0.3),
-                                blurRadius: 36,
-                                offset: const Offset(0, 16),
-                              ),
-                            ],
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF06142E),
-                              borderRadius: BorderRadius.circular(21),
-                            ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(21),
+                              borderRadius: BorderRadius.circular(24),
                               child: Image.asset(
-                                'assets/icons/app_logo.png',
-                                fit: BoxFit.cover,
+                                'assets/branding/notify_jobs_icon.png',
+                                fit: BoxFit.contain,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 22),
+                          const SizedBox(height: 22),
 
-                        // Title
-                        Text(
-                          'NOTIFY JOBS',
-                          style: AppTypography.displayLarge.copyWith(
-                            fontSize: 26,
-                            letterSpacing: 2.0,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-
-                        // Subtitle
-                        Text(
-                          'Government Jobs & Exam Updates',
-                          style: AppTypography.body.copyWith(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF94A3B8),
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Andaman & All India Badge Pill
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.14),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
+                          // Typography: NOTIFY JOBS
+                          Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xFF10B981),
+                            children: const [
+                              Text(
+                                'NOTIFY ',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2.4,
+                                  color: Color(0xFF111111),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Andaman & Nicobar  •  All India',
+                              Text(
+                                'JOBS',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFE2E8F0),
-                                  letterSpacing: 0.4,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2.4,
+                                  color: AppColors.brandOrange,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+
+                          // Orange Accent Divider Bar
+                          Container(
+                            width: 44,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: AppColors.brandOrange,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Subtitle
+                          const Text(
+                            'Government Job Alerts & Exam Updates',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-
-              // Bottom Branding & Loading Strip
-              Positioned(
-                bottom: 36,
-                left: 24,
-                right: 24,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'YOUR FUTURE  •  OUR UPDATES',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 2.2,
-                        color: Colors.white.withOpacity(0.4),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Slim animated progress line
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: SizedBox(
-                        width: 100,
-                        height: 3,
-                        child: LinearProgressIndicator(
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.royalBlue,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],
