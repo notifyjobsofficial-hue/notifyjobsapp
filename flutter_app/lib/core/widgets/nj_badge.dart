@@ -36,14 +36,65 @@ class NjBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     Color textColor;
     Color bgColor;
     Color borderColor;
 
     if (customColor != null) {
-      textColor = customColor!;
-      bgColor = customBgColor ?? customColor!.withOpacity(0.12);
-      borderColor = customColor!.withOpacity(0.25);
+      textColor =
+          isDark ? Color.lerp(customColor!, Colors.white, 0.20)! : customColor!;
+      bgColor = customBgColor ??
+          (isDark
+              ? customColor!.withOpacity(0.18)
+              : customColor!.withOpacity(0.12));
+      borderColor = isDark
+          ? customColor!.withOpacity(0.40)
+          : customColor!.withOpacity(0.25);
+    } else if (isDark) {
+      switch (variant) {
+        case NjBadgeVariant.primary:
+          textColor = const Color(0xFF34D399);
+          bgColor = const Color(0xFF065F46).withOpacity(0.35);
+          borderColor = const Color(0xFF059669).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.secondary:
+          textColor = AppColors.darkTextPrimary;
+          bgColor = AppColors.darkSurfaceElevated;
+          borderColor = AppColors.darkBorder;
+          break;
+        case NjBadgeVariant.softGreen:
+          textColor = const Color(0xFF2DD4BF);
+          bgColor = const Color(0xFF115E59).withOpacity(0.35);
+          borderColor = const Color(0xFF0D9488).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.blue:
+          textColor = const Color(0xFF60A5FA);
+          bgColor = const Color(0xFF1E3A8A).withOpacity(0.35);
+          borderColor = const Color(0xFF2563EB).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.amber:
+          textColor = const Color(0xFFFBBF24);
+          bgColor = const Color(0xFF78350F).withOpacity(0.35);
+          borderColor = const Color(0xFFD97706).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.error:
+          textColor = const Color(0xFFF87171);
+          bgColor = const Color(0xFF7F1D1D).withOpacity(0.35);
+          borderColor = const Color(0xFFDC2626).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.purple:
+          textColor = const Color(0xFFA78BFA);
+          bgColor = const Color(0xFF5B21B6).withOpacity(0.35);
+          borderColor = const Color(0xFF7C3AED).withOpacity(0.5);
+          break;
+        case NjBadgeVariant.slate:
+          textColor = AppColors.darkTextSecondary;
+          bgColor = AppColors.darkSurfaceElevated;
+          borderColor = AppColors.darkBorder;
+          break;
+      }
     } else {
       switch (variant) {
         case NjBadgeVariant.primary:

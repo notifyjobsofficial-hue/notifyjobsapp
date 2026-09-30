@@ -48,7 +48,16 @@ service cloud.firestore {
       allow get: if (resource != null && resource.data.isPublished == true && resource.data.status != 'archived')
                   || isEditorOrAbove();
       allow list: if true;
-      allow create, update: if isEditorOrAbove();
+      allow create: if isEditorOrAbove();
+      allow update: if isEditorOrAbove()
+                    || (
+                      resource != null
+                      && resource.data.isPublished == true
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'views'])
+                      && request.resource.data.viewCount is int
+                      && (request.resource.data.viewCount == resource.data.get('viewCount', 0) + 1
+                          || request.resource.data.viewCount == resource.data.get('views', 0) + 1)
+                    );
       allow delete: if isSuperAdmin();
     }
 
@@ -106,6 +115,28 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow create: if true;
       allow read, update, delete: if isEditorOrAbove();
+    }
+
+    // Automation Pipeline Collections (Strict Admin Security)
+    match /automation_sources/{sourceId} {
+      allow read, write: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /automation_items/{itemId} {
+      allow read, write: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /automation_logs/{logId} {
+      allow read: if isEditorOrAbove();
+      allow write: if isEditorOrAbove();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /automation_settings/{settingId} {
+      allow read: if isEditorOrAbove();
+      allow write: if isSuperAdmin();
     }
 
     // Default deny all other paths

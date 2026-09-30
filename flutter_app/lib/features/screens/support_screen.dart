@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/nj_card.dart';
 import '../../core/widgets/nj_section_header.dart';
+import '../../core/widgets/social_brand_icon.dart';
 
 class SupportScreen extends ConsumerWidget {
   const SupportScreen({super.key});
@@ -72,9 +73,10 @@ class SupportScreen extends ConsumerWidget {
                 if (settings.telegramUrl.isNotEmpty)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFE0F2FE),
-                      child: Icon(Icons.send_rounded, color: Color(0xFF0284C7)),
+                    leading: const SocialBrandIcon.telegram(
+                      size: 28,
+                      withBackground: true,
+                      containerSize: 40,
                     ),
                     title: const Text('Join Telegram Community',
                         style: AppTypography.titleSmall),
@@ -87,10 +89,10 @@ class SupportScreen extends ConsumerWidget {
                 if (settings.whatsappUrl.isNotEmpty)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFFDCFCE7),
-                      child: Icon(Icons.chat_bubble_outline_rounded,
-                          color: Color(0xFF16A34A)),
+                    leading: const SocialBrandIcon.whatsapp(
+                      size: 28,
+                      withBackground: true,
+                      containerSize: 40,
                     ),
                     title: const Text('WhatsApp Channel',
                         style: AppTypography.titleSmall),

@@ -430,6 +430,11 @@ export interface ContentItem {
   instructions?: string;
   updateStatus?: string;
 
+  // Per-Post Share Settings Override
+  shareTargetModeOverride?: 'GLOBAL' | 'PLAY_STORE' | 'WEBSITE' | 'CUSTOM_URL';
+  customShareUrl?: string;
+  customShareText?: string;
+
   // Editorial Article specifics
   articleCategory?: string;
   authorName?: string;
@@ -481,6 +486,7 @@ export interface ContentItem {
   updatedBy?: string;
 
   views: number;
+  viewCount?: number;
   categoryIds: string[];
   tags: string[];
   searchKeywords: string[];
@@ -570,7 +576,11 @@ export interface AppSettings {
   rewardButtonText: string;
 
   shareBaseUrl: string;
+  websiteUrl?: string;
   playStoreUrl: string;
+  shareEnabled?: boolean;
+  shareTargetMode?: 'PLAY_STORE' | 'WEBSITE' | 'SMART';
+  shareMessageTemplate?: string;
   disclaimer: string;
 
   // Announcement Banner (v1.1)
@@ -690,3 +700,5 @@ export interface NotificationLog {
   messageId?: string;
   error?: string;
 }
+
+export * from './automation';

@@ -13,10 +13,30 @@ import '../../core/widgets/nj_markdown_view.dart';
 import '../../core/widgets/nj_section_header.dart';
 import '../../core/widgets/nj_share_sheet.dart';
 
-class ArticleDetailScreen extends ConsumerWidget {
+import '../../core/services/view_count_service.dart';
+
+class ArticleDetailScreen extends ConsumerStatefulWidget {
   final String id;
 
   const ArticleDetailScreen({super.key, required this.id});
+
+  @override
+  ConsumerState<ArticleDetailScreen> createState() =>
+      _ArticleDetailScreenState();
+}
+
+class _ArticleDetailScreenState extends ConsumerState<ArticleDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(viewCountServiceProvider)
+            .recordView(widget.id, contentType: 'article');
+      }
+    });
+  }
 
   Future<void> _launchExternalUrl(
       BuildContext context, String? urlString) async {
@@ -43,9 +63,9 @@ class ArticleDetailScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final item = ref.watch(contentByIdProvider(id));
-    final isSaved = ref.watch(isSavedProvider(id));
+  Widget build(BuildContext context) {
+    final item = ref.watch(contentByIdProvider(widget.id));
+    final isSaved = ref.watch(isSavedProvider(widget.id));
 
     if (item == null) {
       return Scaffold(

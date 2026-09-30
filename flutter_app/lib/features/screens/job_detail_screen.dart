@@ -17,12 +17,31 @@ import '../../core/widgets/nj_official_source_sheet.dart';
 import '../../core/widgets/nj_section_header.dart';
 import '../../core/widgets/nj_share_sheet.dart';
 import '../../core/widgets/nj_status_badge.dart';
+import '../../core/widgets/social_brand_icon.dart';
 import '../../core/utils/normalization_utils.dart';
+import '../../core/services/view_count_service.dart';
 
-class JobDetailScreen extends ConsumerWidget {
+class JobDetailScreen extends ConsumerStatefulWidget {
   final String id;
 
   const JobDetailScreen({super.key, required this.id});
+
+  @override
+  ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
+}
+
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(viewCountServiceProvider)
+            .recordView(widget.id, contentType: 'job');
+      }
+    });
+  }
 
   Future<void> _launchExternalUrl(
       BuildContext context, String? urlString) async {
@@ -78,10 +97,10 @@ class JobDetailScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final job = ref.watch(contentByIdProvider(id));
-    final isSaved = ref.watch(isSavedProvider(id));
+    final job = ref.watch(contentByIdProvider(widget.id));
+    final isSaved = ref.watch(isSavedProvider(widget.id));
     final appSettings = ref.watch(appSettingsProvider);
 
     if (job == null) {
@@ -129,6 +148,7 @@ class JobDetailScreen extends ConsumerWidget {
               context,
               content: job,
               shareBaseUrl: appSettings.shareBaseUrl,
+              appSettings: appSettings,
             ),
           ),
         ],
@@ -696,14 +716,11 @@ class JobDetailScreen extends ConsumerWidget {
               job.whatsappApplyUrl!.isNotEmpty) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.chat_bubble_rounded,
-                    color: Color(0xFF16A34A), size: 18),
+              leading: const SocialBrandIcon.whatsapp(
+                size: 24,
+                withBackground: true,
+                containerSize: 36,
+                isCircle: false,
               ),
               title:
                   const Text('WhatsApp Chat', style: AppTypography.titleSmall),
@@ -718,7 +735,7 @@ class JobDetailScreen extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
-                icon: const Icon(Icons.send_rounded, size: 14),
+                icon: const SocialBrandIcon.whatsapp(size: 14),
                 label: const Text('Chat', style: TextStyle(fontSize: 12)),
                 onPressed: () =>
                     _launchExternalUrl(context, job.whatsappApplyUrl),
@@ -1002,42 +1019,72 @@ class JobDetailScreen extends ConsumerWidget {
     }
 
     if (job.vacanciesBreakdown.isNotEmpty) {
-      return NjCard(
-        padding: EdgeInsets.zero,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(
-                isDark
-                    ? AppColors.darkSurfaceElevated
-                    : const Color(0xFFEFF6FF),
+      return Column(
+        children: job.vacanciesBreakdown.map((item) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: NjCard(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.postName.isNotEmpty
+                              ? item.postName
+                              : 'Vacancies',
+                          style: AppTypography.cardTitle.copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.navy,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.royalBlue.withOpacity(0.2)
+                              : const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item.count.isNotEmpty ? '${item.count} Posts' : '—',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.royalBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.category.isNotEmpty ||
+                      (item.payLevel != null && item.payLevel!.isNotEmpty)) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        if (item.category.isNotEmpty)
+                          _buildPostBadge('Category: ${item.category}', isDark),
+                        if (item.payLevel != null && item.payLevel!.isNotEmpty)
+                          _buildPostBadge('Pay: ${item.payLevel}', isDark),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-              columns: const [
-                DataColumn(
-                    label: Text('Post Name', style: AppTypography.labelLarge)),
-                DataColumn(
-                    label: Text('Category', style: AppTypography.labelLarge)),
-                DataColumn(
-                    label: Text('Vacancies', style: AppTypography.labelLarge)),
-                DataColumn(
-                    label: Text('Pay Level', style: AppTypography.labelLarge)),
-              ],
-              rows: job.vacanciesBreakdown.map((item) {
-                return DataRow(cells: [
-                  DataCell(
-                      Text(item.postName.isNotEmpty ? item.postName : '—')),
-                  DataCell(
-                      Text(item.category.isNotEmpty ? item.category : '—')),
-                  DataCell(Text(item.count.isNotEmpty ? item.count : '—',
-                      style: const TextStyle(fontWeight: FontWeight.w600))),
-                  DataCell(Text(item.payLevel ?? '—')),
-                ]);
-              }).toList(),
             ),
-          ),
-        ),
+          );
+        }).toList(),
       );
     }
 
@@ -1258,14 +1305,17 @@ class JobDetailScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      limit.category.isNotEmpty
-                          ? limit.category
-                          : 'General / UR',
-                      style: AppTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        limit.category.isNotEmpty
+                            ? limit.category
+                            : 'General / UR',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1891,30 +1941,110 @@ class JobDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildExamPatternCard(ContentModel job, bool isDark) {
-    return NjCard(
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: const [
-              DataColumn(
-                  label: Text('Subject', style: AppTypography.labelLarge)),
-              DataColumn(label: Text('Qs', style: AppTypography.labelLarge)),
-              DataColumn(label: Text('Marks', style: AppTypography.labelLarge)),
-            ],
-            rows: job.examPattern.map((p) {
-              return DataRow(cells: [
-                DataCell(Text(p.subject)),
-                DataCell(Text(p.questions)),
-                DataCell(Text(p.marks,
-                    style: const TextStyle(fontWeight: FontWeight.w600))),
-              ]);
-            }).toList(),
+    return Column(
+      children: job.examPattern.map((p) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: NjCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (p.paperName != null && p.paperName!.trim().isNotEmpty) ...[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.royalBlue.withOpacity(0.2)
+                          : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      p.paperName!.trim(),
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.royalBlue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        p.subject,
+                        style: AppTypography.cardTitle.copyWith(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.navy,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.primary.withOpacity(0.15)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${p.marks} Marks',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.primary
+                              : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (p.questions.isNotEmpty)
+                      _buildPostBadge('${p.questions} Questions', isDark),
+                    if (p.duration != null && p.duration!.trim().isNotEmpty)
+                      _buildPostBadge('⏱ ${p.duration!.trim()}', isDark),
+                    if (p.negativeMarking != null &&
+                        p.negativeMarking!.trim().isNotEmpty)
+                      _buildPostBadge(
+                          'Negative: ${p.negativeMarking!.trim()}', isDark),
+                    if (p.minimumQualifyingMarks != null &&
+                        p.minimumQualifyingMarks!.trim().isNotEmpty)
+                      _buildPostBadge(
+                          'Min: ${p.minimumQualifyingMarks!.trim()}', isDark),
+                  ],
+                ),
+                if (p.notes != null && p.notes!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    p.notes!.trim(),
+                    style: AppTypography.caption.copyWith(
+                      fontSize: 11.5,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.secondaryText,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }).toList(),
     );
   }
 
@@ -2415,6 +2545,7 @@ class JobDetailScreen extends ConsumerWidget {
                 context,
                 content: job,
                 shareBaseUrl: appSettings.shareBaseUrl,
+                appSettings: appSettings,
               ),
             ),
             const SizedBox(width: 12),
@@ -2423,7 +2554,7 @@ class JobDetailScreen extends ConsumerWidget {
                       (job.whatsappApplyUrl?.isNotEmpty ?? false)
                   ? NjButton(
                       label: 'Apply via WhatsApp',
-                      icon: Icons.chat_bubble_rounded,
+                      icon: const SocialBrandIcon.whatsapp(size: 20),
                       onPressed: () =>
                           _launchExternalUrl(context, job.whatsappApplyUrl),
                     )

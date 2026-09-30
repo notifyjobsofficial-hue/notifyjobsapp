@@ -14,6 +14,7 @@ import { AdSettingsPage } from './pages/AdSettingsPage';
 import { AppSettingsPage } from './pages/AppSettingsPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { DiagnosticsPage } from './pages/DiagnosticsPage';
+import { AutomationPage } from './pages/AutomationPage';
 import { MobilePreviewModal } from './components/preview/MobilePreviewModal';
 import { AdminToast, ToastMessage } from './components/common/AdminToast';
 import {
@@ -319,6 +320,7 @@ export function App() {
     app_settings: 'Remote App Settings',
     admin_users: 'Admin Team & Roles',
     diagnostics: 'Diagnostics & Connectivity',
+    automation: 'AI Source Ingestion & Pipeline',
   };
 
   // Synchronize hash with currentView for bookmarking and browser navigation
@@ -491,6 +493,19 @@ export function App() {
 
       case 'diagnostics':
         return <DiagnosticsPage />;
+
+      case 'automation':
+        return (
+          <AutomationPage
+            userEmail={currentUser.email}
+            categories={categories}
+            onEditInSmartEditor={(prefilledItem) => {
+              setEditingItem(prefilledItem as ContentItem);
+              setCurrentView('content_add');
+            }}
+            onShowToast={addToast}
+          />
+        );
 
       default: {
         // Precise configurations for all content views

@@ -46,7 +46,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const resultsCount = publishedItems.filter((i) => i.contentType === 'result').length;
   const admitCardsCount = publishedItems.filter((i) => i.contentType === 'admit_card').length;
   const articlesCount = publishedItems.filter((i) => i.contentType === 'article').length;
-  const totalViews = items.reduce((acc, curr) => acc + (curr.views || 0), 0);
+  const totalViews = items.reduce((acc, curr) => acc + (curr.viewCount ?? curr.views ?? 0), 0);
 
   const stats = [
     {
@@ -101,7 +101,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   ];
 
   // Most viewed
-  const mostViewed = [...publishedItems].sort((a, b) => b.views - a.views).slice(0, 5);
+  const mostViewed = [...publishedItems]
+    .sort((a, b) => (b.viewCount ?? b.views ?? 0) - (a.viewCount ?? a.views ?? 0))
+    .slice(0, 5);
 
   // Recent content
   const recentContent = [...items].slice(0, 5);
@@ -175,7 +177,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                   <div className="text-right flex-shrink-0">
                     <span className="text-xs font-medium text-slate-400 block">
-                      {item.views.toLocaleString()} views
+                      {Number(item.viewCount ?? item.views ?? 0).toLocaleString()} views
                     </span>
                   </div>
                 </div>
@@ -262,7 +264,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#159B76]">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span>{item.views.toLocaleString()}</span>
+                  <span>{Number(item.viewCount ?? item.views ?? 0).toLocaleString()}</span>
                 </div>
               </div>
             ))}

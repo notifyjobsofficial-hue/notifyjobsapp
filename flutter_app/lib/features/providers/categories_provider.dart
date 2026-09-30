@@ -147,6 +147,19 @@ const List<CategoryModel> defaultFallbackCategories = [
     destination: '/more',
     contentScope: 'article',
   ),
+  CategoryModel(
+    id: 'irbn-police',
+    name: 'IRBN Police',
+    shortName: 'IRBN Police',
+    slug: 'irbn-police',
+    icon: 'security',
+    colorHex: '#1E3A8A',
+    order: 12,
+    isActive: true,
+    showOnHome: true,
+    destination: '/jobs?category=irbn-police',
+    contentScope: 'job',
+  ),
 ];
 
 /// Real-time stream of categories from Firestore collection 'categories'.

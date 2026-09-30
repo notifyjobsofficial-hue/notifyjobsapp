@@ -117,7 +117,9 @@ export async function fetchContentList(options: {
     const snapshot = await getDocs(q);
     let items: ContentItem[] = [];
     snapshot.forEach((docSnap) => {
-      items.push({ id: docSnap.id, ...docSnap.data() } as ContentItem);
+      const data = docSnap.data();
+      const viewCount = data.viewCount !== undefined ? Number(data.viewCount) : Number(data.views || 0);
+      items.push({ id: docSnap.id, ...data, views: viewCount, viewCount } as ContentItem);
     });
 
     // Apply client-side filters for contentType, categoryId, and search if specified
@@ -217,7 +219,8 @@ export async function saveContent(
     createdBy: content.createdBy || userEmail,
     updatedBy: userEmail,
 
-    views: content.views || 0,
+    views: content.viewCount ?? content.views ?? 0,
+    viewCount: content.viewCount ?? content.views ?? 0,
     categoryIds: content.categoryIds || ['latest-jobs'],
     tags: content.tags || [],
     searchKeywords: keywords,

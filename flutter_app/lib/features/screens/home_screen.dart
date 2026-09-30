@@ -12,6 +12,7 @@ import '../../core/widgets/nj_share_sheet.dart';
 import '../../core/widgets/nj_skeleton.dart';
 import '../../core/widgets/nj_section_error.dart';
 import '../../core/widgets/nj_icon_container.dart';
+import '../../core/widgets/social_brand_icon.dart';
 import '../models/content_model.dart';
 import '../models/category_model.dart';
 import '../providers/content_providers.dart';
@@ -80,10 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               SliverToBoxAdapter(child: _HomeExamUpdatesSection()),
 
               // 10. Community CTA (WhatsApp & Telegram channels)
-              SliverToBoxAdapter(child: _HomeCommunityCtaSection()),
-
-              // 11. Official / Legal Disclaimer footer
-              SliverToBoxAdapter(child: _HomeLegalDisclaimer()),
+              SliverToBoxAdapter(child: HomeCommunityCtaSection()),
 
               SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
@@ -656,7 +654,7 @@ class _HomeQuickCategoriesSection extends ConsumerWidget {
 
     final List<CategoryModel> categories = liveCategories.isNotEmpty
         ? liveCategories
-        : defaultFallbackCategories.where((c) => c.showOnHome).take(8).toList();
+        : defaultFallbackCategories.where((c) => c.showOnHome).toList();
 
     if (categories.isEmpty) return const SizedBox.shrink();
 
@@ -722,9 +720,9 @@ class _HomeQuickCategoriesSection extends ConsumerWidget {
               itemCount: categories.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 10,
-                mainAxisExtent: 68,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 12,
+                mainAxisExtent: 82,
               ),
               itemBuilder: (context, index) {
                 final cat = categories[index];
@@ -735,51 +733,18 @@ class _HomeQuickCategoriesSection extends ConsumerWidget {
                         ? cat.shortName!
                         : cat.name;
 
-                return GestureDetector(
+                return NjQuickCategoryTile(
+                  label: label,
+                  slug: cat.slug,
+                  icon: icon,
+                  baseColor: color,
                   onTap: () {
-                    HapticFeedback.selectionClick();
                     final dest =
                         (cat.destination != null && cat.destination!.isNotEmpty)
                             ? cat.destination!
                             : '/jobs?category=${cat.slug}';
                     context.push(dest);
                   },
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? color.withOpacity(0.18)
-                              : color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: color.withOpacity(0.25),
-                            width: 1,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(icon, size: 20, color: color),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.navy,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
                 );
               },
             ),
@@ -820,7 +785,7 @@ class _HomeClosingSoonSection extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 130,
+                height: 132,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -848,7 +813,7 @@ class _HomeClosingSoonSection extends ConsumerWidget {
         context.push('/job/${job.id}');
       },
       child: Container(
-        width: 240,
+        width: 248,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : Colors.white,
@@ -856,12 +821,14 @@ class _HomeClosingSoonSection extends ConsumerWidget {
           border: Border.all(
             color: isDark
                 ? const Color(0xFF7F1D1D).withOpacity(0.5)
-                : const Color(0xFFFCA5A5),
+                : const Color(0xFFFECACA),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: isDark
+                  ? Colors.black.withOpacity(0.2)
+                  : const Color(0xFFEF4444).withOpacity(0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -890,23 +857,30 @@ class _HomeClosingSoonSection extends ConsumerWidget {
                 const SizedBox(width: 4),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(4),
+                    color: isDark
+                        ? const Color(0xFFEF4444).withOpacity(0.18)
+                        : const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFFEF4444).withOpacity(0.35),
+                      width: 0.8,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined,
-                          size: 10, color: Color(0xFFDC2626)),
+                      const Icon(Icons.alarm_rounded,
+                          size: 11, color: Color(0xFFDC2626)),
                       const SizedBox(width: 3),
                       Text(
                         job.displayLastDate,
                         style: const TextStyle(
                           fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                           color: Color(0xFFDC2626),
+                          letterSpacing: 0.1,
                         ),
                       ),
                     ],
@@ -940,20 +914,37 @@ class _HomeClosingSoonSection extends ConsumerWidget {
                         : AppColors.primary,
                   ),
                 ),
-                const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Apply',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFDC2626),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withOpacity(0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
                       ),
-                    ),
-                    Icon(Icons.chevron_right_rounded,
-                        size: 14, color: Color(0xFFDC2626)),
-                  ],
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Apply Now',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_rounded,
+                          size: 11, color: Colors.white),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1228,8 +1219,8 @@ class _HomeJobCardItem extends ConsumerWidget {
 }
 
 /// 12. Community CTA Section (WhatsApp & Telegram Channels from Admin Settings)
-class _HomeCommunityCtaSection extends ConsumerWidget {
-  const _HomeCommunityCtaSection();
+class HomeCommunityCtaSection extends ConsumerWidget {
+  const HomeCommunityCtaSection({super.key});
 
   Future<void> _launchUrl(String url) async {
     if (url.trim().isEmpty) return;
@@ -1241,11 +1232,23 @@ class _HomeCommunityCtaSection extends ConsumerWidget {
     } catch (_) {}
   }
 
+  static bool _isValidUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    final trimmed = url.trim();
+    final uri = Uri.tryParse(trimmed);
+    return uri != null &&
+        uri.hasScheme &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
-    final hasWhatsApp = settings.whatsappUrl.isNotEmpty;
-    final hasTelegram = settings.telegramUrl.isNotEmpty;
+    final hasWhatsApp =
+        settings.whatsappEnabled && _isValidUrl(settings.whatsappUrl);
+    final hasTelegram =
+        settings.telegramEnabled && _isValidUrl(settings.telegramUrl);
 
     if (!hasWhatsApp && !hasTelegram) {
       return const SizedBox.shrink();
@@ -1253,175 +1256,136 @@ class _HomeCommunityCtaSection extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (hasWhatsApp)
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _launchUrl(settings.whatsappUrl),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFF25D366).withOpacity(0.35),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF25D366).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.chat_bubble_rounded,
-                              color: Color(0xFF25D366),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'WhatsApp',
-                                  style: AppTypography.subtitle.copyWith(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.darkTextPrimary
-                                        : AppColors.navy,
-                                  ),
-                                ),
-                                Text(
-                                  'Instant alerts',
-                                  style: AppTypography.caption.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              if (hasWhatsApp && hasTelegram) const SizedBox(width: 10),
-              if (hasTelegram)
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _launchUrl(settings.telegramUrl),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFF229ED9).withOpacity(0.35),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF229ED9).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.send_rounded,
-                              color: Color(0xFF229ED9),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Telegram',
-                                  style: AppTypography.subtitle.copyWith(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.darkTextPrimary
-                                        : AppColors.navy,
-                                  ),
-                                ),
-                                Text(
-                                  'Official channel',
-                                  style: AppTypography.caption.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+    Widget buildWhatsAppCard() {
+      return GestureDetector(
+        onTap: () => _launchUrl(settings.whatsappUrl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFF25D366).withOpacity(0.35),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 11. Official / Legal Disclaimer footer
-class _HomeLegalDisclaimer extends StatelessWidget {
-  const _HomeLegalDisclaimer();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Center(
-        child: Text(
-          'Notify Jobs is an independent exam & recruitment notification service. All official notices & logos are property of their respective government bodies.',
-          style: AppTypography.caption.copyWith(
-            fontSize: 11,
-            color: isDark
-                ? AppColors.darkTextSecondary.withOpacity(0.6)
-                : AppColors.muted,
-            height: 1.4,
+          child: Row(
+            children: [
+              const SocialBrandIcon.whatsapp(
+                size: 28,
+                withBackground: true,
+                containerSize: 34,
+                isCircle: false,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WhatsApp',
+                      style: AppTypography.subtitle.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                      ),
+                    ),
+                    Text(
+                      'Instant alerts',
+                      style: AppTypography.caption.copyWith(
+                        fontSize: 10,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          textAlign: TextAlign.center,
         ),
+      );
+    }
+
+    Widget buildTelegramCard() {
+      return GestureDetector(
+        onTap: () => _launchUrl(settings.telegramUrl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFF229ED9).withOpacity(0.35),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const SocialBrandIcon.telegram(
+                size: 28,
+                withBackground: true,
+                containerSize: 34,
+                isCircle: false,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Telegram',
+                      style: AppTypography.subtitle.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isDark ? AppColors.darkTextPrimary : AppColors.navy,
+                      ),
+                    ),
+                    Text(
+                      'Official channel',
+                      style: AppTypography.caption.copyWith(
+                        fontSize: 10,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          if (hasWhatsApp && hasTelegram) ...[
+            Expanded(child: buildWhatsAppCard()),
+            const SizedBox(width: 10),
+            Expanded(child: buildTelegramCard()),
+          ] else if (hasWhatsApp) ...[
+            Expanded(child: buildWhatsAppCard()),
+          ] else if (hasTelegram) ...[
+            Expanded(child: buildTelegramCard()),
+          ],
+        ],
       ),
     );
   }

@@ -65,12 +65,23 @@ class NjStatusBadge extends StatelessWidget {
       explicitStatus: statusOverride,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark
+        ? status.foregroundColor.withOpacity(0.18)
+        : status.backgroundColor;
+    final borderColor =
+        isDark ? status.foregroundColor.withOpacity(0.40) : status.borderColor;
+    final textColor = isDark
+        ? Color.lerp(status.foregroundColor, Colors.white, 0.20)!
+        : status.foregroundColor;
+    final dotColor = isDark ? textColor : status.foregroundColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
-        color: status.backgroundColor,
+        color: bgColor,
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: status.borderColor, width: 0.8),
+        border: Border.all(color: borderColor, width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -80,7 +91,7 @@ class NjStatusBadge extends StatelessWidget {
             height: 5,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: status.foregroundColor,
+              color: dotColor,
             ),
           ),
           const SizedBox(width: 5),
@@ -90,7 +101,7 @@ class NjStatusBadge extends StatelessWidget {
               style: AppTypography.caption.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: status.foregroundColor,
+                color: textColor,
                 letterSpacing: -0.1,
               ),
               maxLines: 1,

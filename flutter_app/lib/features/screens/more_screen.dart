@@ -9,6 +9,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/widgets/nj_card.dart';
 import '../../core/widgets/nj_support_us_sheet.dart';
+import '../../core/widgets/social_brand_icon.dart';
 import '../providers/app_settings_provider.dart';
 
 /// More / Settings Screen cleanly structured with exactly 5 sections (Specification Part 6)
@@ -201,10 +202,8 @@ class MoreScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _buildSocialTile(
-                      label: 'Join WhatsApp',
-                      icon: Icons.chat_bubble_rounded,
-                      iconColor: const Color(0xFF16A34A),
-                      bgColor: const Color(0xFFDCFCE7),
+                      platform: SocialPlatform.whatsapp,
+                      label: 'WhatsApp',
                       onTap: () {
                         final url = settings.whatsappUrl.isNotEmpty
                             ? settings.whatsappUrl
@@ -217,10 +216,8 @@ class MoreScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildSocialTile(
-                      label: 'Join Telegram',
-                      icon: Icons.send_rounded,
-                      iconColor: const Color(0xFF0284C7),
-                      bgColor: const Color(0xFFE0F2FE),
+                      platform: SocialPlatform.telegram,
+                      label: 'Telegram',
                       onTap: () {
                         final url = settings.telegramUrl.isNotEmpty
                             ? settings.telegramUrl
@@ -402,10 +399,8 @@ class MoreScreen extends ConsumerWidget {
   }
 
   Widget _buildSocialTile({
+    required SocialPlatform platform,
     required String label,
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
     required VoidCallback onTap,
     required bool isDark,
   }) {
@@ -414,18 +409,15 @@ class MoreScreen extends ConsumerWidget {
         HapticFeedback.selectionClick();
         onTap();
       },
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
+          SocialBrandIcon(
+            platform: platform,
+            size: 28,
+            withBackground: true,
+            containerSize: 38,
           ),
           const SizedBox(width: 10),
           Flexible(
@@ -453,41 +445,45 @@ class MoreScreen extends ConsumerWidget {
     required bool isDark,
     Color? iconColor,
   }) {
-    return ListTile(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color:
-              isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceElevated
+                : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: iconColor ??
+                (isDark ? AppColors.darkTextPrimary : AppColors.navy),
+          ),
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: iconColor ??
-              (isDark ? AppColors.darkTextPrimary : AppColors.navy),
+        title: Text(
+          title,
+          style: AppTypography.cardTitle.copyWith(
+            fontSize: 14,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+          ),
         ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.caption.copyWith(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.muted,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded,
+            size: 20, color: AppColors.muted),
       ),
-      title: Text(
-        title,
-        style: AppTypography.cardTitle.copyWith(
-          fontSize: 14,
-          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AppTypography.caption.copyWith(
-          color: isDark ? AppColors.darkTextSecondary : AppColors.muted,
-        ),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded,
-          size: 20, color: AppColors.muted),
     );
   }
 
@@ -499,38 +495,42 @@ class MoreScreen extends ConsumerWidget {
     required ValueChanged<bool> onChanged,
     required bool isDark,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color:
-              isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceElevated
+                : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+          ),
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+        title: Text(
+          title,
+          style: AppTypography.cardTitle.copyWith(
+            fontSize: 14,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+          ),
         ),
-      ),
-      title: Text(
-        title,
-        style: AppTypography.cardTitle.copyWith(
-          fontSize: 14,
-          color: isDark ? AppColors.darkTextPrimary : AppColors.navy,
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.caption.copyWith(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.muted,
+          ),
         ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AppTypography.caption.copyWith(
-          color: isDark ? AppColors.darkTextSecondary : AppColors.muted,
+        trailing: Switch.adaptive(
+          value: value,
+          onChanged: onChanged,
+          activeColor: AppColors.primary,
         ),
-      ),
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: onChanged,
-        activeColor: AppColors.primary,
       ),
     );
   }

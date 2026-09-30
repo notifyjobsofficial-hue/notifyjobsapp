@@ -13,6 +13,7 @@ interface Env {
   FIREBASE_SERVICE_ACCOUNT?: string;
   FIREBASE_PROJECT_ID?: string;
   ADMIN_API_SECRET?: string;
+  GEMINI_API_KEY?: string;
 }
 
 interface NotificationPayload {
@@ -57,6 +58,18 @@ export default {
         return await handleSendNotification(request, env);
       }
 
+      if (url.pathname === '/api/views/increment' && request.method === 'POST') {
+        return await handleIncrementView(request, env);
+      }
+
+      if (url.pathname === '/api/automation/crawl' && request.method === 'GET') {
+        return await handleAutomationCrawl(request, env);
+      }
+
+      if (url.pathname === '/api/automation/extract' && request.method === 'POST') {
+        return await handleAutomationExtract(request, env);
+      }
+
       return jsonResponse({ error: 'Endpoint not found' }, 404);
     } catch (err: any) {
       console.error('Worker error:', err);
@@ -69,6 +82,10 @@ export default {
       );
     }
   },
+
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log('Automated Source Ingestion Cron triggered at:', new Date().toISOString());
+  },
 };
 
 /**
@@ -76,17 +93,22 @@ export default {
  */
 function handleHealth(env: Env): Response {
   const hasServiceAccount = Boolean(env.FIREBASE_SERVICE_ACCOUNT);
+  const hasGeminiKey = Boolean(env.GEMINI_API_KEY);
   return jsonResponse({
     status: 'ok',
     service: 'notify-jobs-fcm-worker',
     environment: env.ENVIRONMENT || 'production',
     serviceAccountConfigured: hasServiceAccount,
+    geminiConfigured: hasGeminiKey,
+    automationPipeline: 'active',
+    channelId: 'notify_jobs_alerts',
+    defaultTopic: 'all_users',
     timestamp: new Date().toISOString(),
   });
 }
 
 /**
- * Secure FCM Send Handler
+ * Secure FCM Send Handler (Specification 8, 16, 17, 18, 23)
  */
 async function handleSendNotification(request: Request, env: Env): Promise<Response> {
   // Verify authorization
@@ -104,7 +126,7 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
   }
 
   // Parse request body
-  let payload: NotificationPayload;
+  let payload: any;
   try {
     payload = await request.json();
   } catch {
@@ -115,7 +137,7 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
     return jsonResponse({ error: 'Missing required fields: title, body' }, 400);
   }
 
-  const topic = payload.topic || 'all_updates';
+  const topic = payload.topic || 'all_users';
 
   // Retrieve Service Account
   if (!env.FIREBASE_SERVICE_ACCOUNT) {
@@ -145,7 +167,12 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
   // Generate OAuth2 Google Access Token using Web Crypto RS256
   const accessToken = await getGoogleOAuthToken(sa);
 
-  // Construct FCM HTTP v1 Message
+  const notificationId = payload.notificationId || `notif_${Date.now()}`;
+  const contentId = payload.contentId || payload.data?.contentId || '';
+  const contentType = payload.contentType || payload.data?.contentType || 'government_job';
+  const route = payload.route || payload.data?.route || (contentId ? (contentType === 'article' ? `/article/${contentId}` : (contentType.includes('job') ? `/job/${contentId}` : `/update/${contentId}`)) : '/');
+
+  // Construct FCM HTTP v1 Message (Specification 18)
   const fcmMessage: any = {
     message: {
       notification: {
@@ -158,6 +185,10 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
         title: payload.title,
         body: payload.body,
         timestamp: Date.now().toString(),
+        notificationId: notificationId,
+        contentId: contentId,
+        contentType: contentType,
+        route: route,
         ...(payload.data || {}),
       },
       android: {
@@ -165,7 +196,11 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
         notification: {
           sound: 'default',
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
-          channel_id: 'notify_jobs_channel',
+          channel_id: 'notify_jobs_alerts',
+          icon: 'ic_stat_notify_jobs',
+          color: '#FF5A00',
+          default_sound: true,
+          default_vibrate_timings: true,
           ...(payload.imageUrl ? { image_url: payload.imageUrl } : {}),
         },
       },
@@ -175,7 +210,7 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
   if (payload.token) {
     fcmMessage.message.token = payload.token;
   } else {
-    // Topic dispatch (e.g. /topics/all_updates)
+    // Topic dispatch (e.g. all_users)
     fcmMessage.message.topic = topic.startsWith('/topics/') ? topic.replace('/topics/', '') : topic;
   }
 
@@ -193,11 +228,21 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
   const fcmResult: any = await fcmResponse.json();
 
   if (!fcmResponse.ok) {
-    console.error('FCM Send Error:', fcmResult);
+    const errorDetails = {
+      status: fcmResponse.status,
+      statusText: fcmResponse.statusText,
+      fcmError: fcmResult?.error?.message || fcmResult?.error || 'Unknown FCM error',
+      code: fcmResult?.error?.code || fcmResponse.status,
+      details: fcmResult,
+      target: payload.token ? `token:${payload.token.substring(0, 10)}...` : `topic:${topic}`,
+      timestamp: new Date().toISOString(),
+    };
+    console.error('FCM Send Failed:', JSON.stringify(errorDetails));
     return jsonResponse(
       {
         error: 'Failed to dispatch FCM message',
-        details: fcmResult,
+        message: errorDetails.fcmError,
+        ...errorDetails,
       },
       fcmResponse.status
     );
@@ -207,7 +252,81 @@ async function handleSendNotification(request: Request, env: Env): Promise<Respo
     success: true,
     messageId: fcmResult.name,
     topic: payload.token ? undefined : topic,
+    token: payload.token ? 'DEVICE_TOKEN_TARGETED' : undefined,
     sentAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Atomic View Increment Handler (Specification 3 & 4)
+ */
+async function handleIncrementView(request: Request, env: Env): Promise<Response> {
+  let body: { contentId: string };
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.contentId) {
+    return jsonResponse({ error: 'Missing required field: contentId' }, 400);
+  }
+
+  if (!env.FIREBASE_SERVICE_ACCOUNT) {
+    return jsonResponse({ error: 'Service account not configured in Worker' }, 500);
+  }
+
+  let sa: ServiceAccount;
+  try {
+    sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
+  } catch {
+    return jsonResponse({ error: 'Malformed FIREBASE_SERVICE_ACCOUNT JSON secret' }, 500);
+  }
+
+  const projectId = sa.project_id || env.FIREBASE_PROJECT_ID;
+  const accessToken = await getGoogleOAuthToken(sa);
+
+  // Firestore commit transform with atomic increment
+  const commitUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
+  const commitBody = {
+    writes: [
+      {
+        transform: {
+          document: `projects/${projectId}/databases/(default)/documents/content/${body.contentId}`,
+          fieldTransforms: [
+            {
+              fieldPath: 'viewCount',
+              increment: { integerValue: '1' },
+            },
+            {
+              fieldPath: 'views',
+              increment: { integerValue: '1' },
+            },
+          ],
+        },
+      },
+    ],
+  };
+
+  const firestoreRes = await fetch(commitUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(commitBody),
+  });
+
+  if (!firestoreRes.ok) {
+    const errText = await firestoreRes.text();
+    console.error('Firestore increment failed:', errText);
+    return jsonResponse({ error: 'Firestore increment failed', details: errText }, firestoreRes.status);
+  }
+
+  return jsonResponse({
+    success: true,
+    contentId: body.contentId,
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -225,7 +344,7 @@ async function getGoogleOAuthToken(sa: ServiceAccount): Promise<string> {
 
   const claimSet = {
     iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    scope: 'https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/datastore',
     aud: 'https://oauth2.googleapis.com/token',
     exp,
     iat,
@@ -316,6 +435,170 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes.buffer;
+}
+
+/**
+ * Respectful Web Crawler Proxy with Anti-Bot Detection (Section 3 & 16)
+ */
+async function handleAutomationCrawl(request: Request, env: Env): Promise<Response> {
+  const urlParam = new URL(request.url).searchParams.get('url');
+  if (!urlParam) {
+    return jsonResponse({ error: 'Missing url query parameter' }, 400);
+  }
+
+  try {
+    const targetUrl = new URL(urlParam);
+    if (targetUrl.protocol !== 'http:' && targetUrl.protocol !== 'https:') {
+      return jsonResponse({ error: 'Only HTTP/HTTPS URLs allowed' }, 400);
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    const fetchResponse = await fetch(urlParam, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 NotifyJobs-Bot/1.0 (+https://notifyjobs.in/bot)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf;q=0.8,*/*;q=0.7',
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    const statusCode = fetchResponse.status;
+    const contentType = fetchResponse.headers.get('content-type') || '';
+    const isPdf = contentType.includes('application/pdf') || urlParam.toLowerCase().endsWith('.pdf');
+
+    if (statusCode === 403 || statusCode === 401) {
+      return jsonResponse({
+        statusCode,
+        isBlocked: true,
+        blockReason: `HTTP ${statusCode} Forbidden: Server blocks automated requests`,
+        content: '',
+      }, 200);
+    }
+
+    if (statusCode === 429) {
+      return jsonResponse({
+        statusCode,
+        isBlocked: true,
+        blockReason: 'HTTP 429 Rate Limit Exceeded on source portal',
+        content: '',
+      }, 200);
+    }
+
+    const bodyText = isPdf ? '[PDF Content Binary]' : await fetchResponse.text();
+
+    const lower = bodyText.toLowerCase();
+    const isCaptcha =
+      lower.includes('cf-mitigated') ||
+      lower.includes('turnstile') ||
+      lower.includes('challenges.cloudflare.com') ||
+      lower.includes('g-recaptcha') ||
+      lower.includes('hcaptcha') ||
+      lower.includes('please verify you are human') ||
+      lower.includes('access denied | dd-os protection');
+
+    if (isCaptcha) {
+      return jsonResponse({
+        statusCode: 403,
+        isBlocked: true,
+        blockReason: 'Anti-bot / CAPTCHA challenge detected on portal',
+        content: '',
+      }, 200);
+    }
+
+    return new Response(bodyText, {
+      status: statusCode,
+      headers: {
+        ...CORS_HEADERS,
+        'Content-Type': contentType || 'text/html; charset=utf-8',
+        'X-Proxy-Status': String(statusCode),
+        'X-Is-Blocked': 'false',
+      },
+    });
+  } catch (err: any) {
+    return jsonResponse({
+      statusCode: 504,
+      isBlocked: false,
+      blockReason: err?.name === 'AbortError' ? 'Request timed out after 12s' : (err?.message || 'Crawl failed'),
+      content: '',
+    }, 200);
+  }
+}
+
+/**
+ * Privileged Gemini Extraction Handler (Section 6 & 15)
+ */
+async function handleAutomationExtract(request: Request, env: Env): Promise<Response> {
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const apiKey = env.GEMINI_API_KEY || body.apiKey;
+  if (!apiKey) {
+    return jsonResponse({ error: 'GEMINI_API_KEY not configured in worker environment' }, 500);
+  }
+
+  const model = body.model || 'gemini-1.5-flash';
+  const temperature = body.temperature ?? 0.1;
+  const rawContent = (body.rawContent || '').slice(0, 25000);
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const systemInstruction = `You are the official recruitment notice extraction engine for Notify Jobs. Extract details into valid JSON matching Notify Jobs schema. CRITICAL: Never invent missing facts. If not explicitly in text, return null or empty array.`;
+
+  const prompt = `Extract recruitment details from this notice text into JSON with fields: title, seoTitle, organization, department, notificationNumber, advtNumber, recruitmentYear, location, employmentType, recruitmentType, excerpt, body, totalVacancies, posts, importantDates, applicationStartDate, applicationLastDate, examDate, applicationFees, howToApplySteps, officialWebsiteUrl, officialNotificationUrl, applyUrl.\n\nNotice:\n${rawContent}`;
+
+  const payload = {
+    contents: [
+      { parts: [{ text: systemInstruction }, { text: prompt }] },
+    ],
+    generationConfig: {
+      temperature,
+      responseMimeType: 'application/json',
+    },
+  };
+
+  try {
+    const geminiRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      return jsonResponse({ error: 'Gemini API call failed', details: errText }, geminiRes.status);
+    }
+
+    const result: any = await geminiRes.json();
+    const candidateText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!candidateText) {
+      return jsonResponse({ error: 'Empty candidate text from Gemini' }, 500);
+    }
+
+    const cleanText = candidateText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
+
+    const parsedJson = JSON.parse(cleanText);
+
+    return jsonResponse({
+      success: true,
+      extractedData: parsedJson,
+      tokensUsed: result.usageMetadata?.totalTokenCount,
+      rawResponseText: candidateText,
+    });
+  } catch (err: any) {
+    return jsonResponse({ error: 'Extraction failed', message: err?.message || String(err) }, 500);
+  }
 }
 
 function jsonResponse(data: any, status = 200): Response {

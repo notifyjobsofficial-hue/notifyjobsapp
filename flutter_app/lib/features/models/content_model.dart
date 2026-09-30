@@ -926,7 +926,8 @@ class ContentModel {
   final bool isPublished;
   final String? publishedAt;
   final String? updatedAt;
-  final int views;
+  final int viewCount;
+  int get views => viewCount;
   final List<String> categoryIds;
   final List<String> tags;
 
@@ -1005,6 +1006,11 @@ class ContentModel {
   final String? instructions;
   final String? updateStatus;
 
+  // Per-Post Share Settings Override
+  final String? shareTargetModeOverride;
+  final String? customShareUrl;
+  final String? customShareText;
+
   const ContentModel({
     required this.id,
     required this.contentType,
@@ -1071,7 +1077,7 @@ class ContentModel {
     this.isPublished = true,
     this.publishedAt,
     this.updatedAt,
-    this.views = 0,
+    this.viewCount = 0,
     this.categoryIds = const [],
     this.tags = const [],
     this.vacancyMode,
@@ -1130,6 +1136,9 @@ class ContentModel {
     this.objectionFee,
     this.instructions,
     this.updateStatus,
+    this.shareTargetModeOverride,
+    this.customShareUrl,
+    this.customShareText,
   });
 
   /// JSON Deserializer for unit testing and mock data
@@ -1371,7 +1380,10 @@ class ContentModel {
       }(),
       publishedAt: parseDate(map['publishedAt'] ?? map['publishAt']),
       updatedAt: parseDate(map['updatedAt']),
-      views: int.tryParse(map['views']?.toString() ?? '0') ?? 0,
+      viewCount: int.tryParse(map['viewCount']?.toString() ??
+              map['views']?.toString() ??
+              '0') ??
+          0,
       categoryIds: () {
         final raw = map['categoryIds'];
         if (raw is List) {
@@ -1541,6 +1553,9 @@ class ContentModel {
       objectionFee: map['objectionFee']?.toString(),
       instructions: map['instructions']?.toString(),
       updateStatus: map['updateStatus']?.toString(),
+      shareTargetModeOverride: map['shareTargetModeOverride']?.toString(),
+      customShareUrl: map['customShareUrl']?.toString(),
+      customShareText: map['customShareText']?.toString(),
     );
   }
 
@@ -1611,7 +1626,8 @@ class ContentModel {
         'isPublished': isPublished,
         'publishedAt': publishedAt,
         'updatedAt': updatedAt,
-        'views': views,
+        'viewCount': viewCount,
+        'views': viewCount,
         'categoryIds': categoryIds,
         'tags': tags,
         if (vacancyMode != null) 'vacancyMode': vacancyMode,
@@ -1687,6 +1703,10 @@ class ContentModel {
         if (objectionFee != null) 'objectionFee': objectionFee,
         if (instructions != null) 'instructions': instructions,
         if (updateStatus != null) 'updateStatus': updateStatus,
+        if (shareTargetModeOverride != null)
+          'shareTargetModeOverride': shareTargetModeOverride,
+        if (customShareUrl != null) 'customShareUrl': customShareUrl,
+        if (customShareText != null) 'customShareText': customShareText,
       };
 
   String get categoryDisplay {

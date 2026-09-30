@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 enum NjIconVariant {
+  latestJobs,
   govtJobs,
   allGovtJobs,
   andamanJobs,
@@ -16,6 +18,8 @@ enum NjIconVariant {
   articles,
   ssc,
   police,
+  policeDefence,
+  irbnPolice,
   defence,
   railway,
   banking,
@@ -29,6 +33,7 @@ class NjCategoryIcon extends StatelessWidget {
   final NjIconVariant? variant;
   final String? categorySlug;
   final IconData? icon;
+  final Color? baseColor;
   final double size;
   final double iconSize;
   final double borderRadius;
@@ -40,6 +45,7 @@ class NjCategoryIcon extends StatelessWidget {
     this.variant,
     this.categorySlug,
     this.icon,
+    this.baseColor,
     this.size = 46.0,
     this.iconSize = 22.0,
     this.borderRadius = 14.0,
@@ -54,8 +60,27 @@ class NjCategoryIcon extends StatelessWidget {
     }
     final s = slugOrType.toLowerCase().replaceAll('_', '-').trim();
 
-    if (s.contains('andaman') || s == 'a&n') {
+    if (s.contains('irbn')) {
+      return NjIconVariant.irbnPolice;
+    }
+    if (s.contains('police-defence') ||
+        (s.contains('police') && s.contains('defence'))) {
+      return NjIconVariant.policeDefence;
+    }
+    if (s.contains('police')) {
+      return NjIconVariant.police;
+    }
+    if (s.contains('defence') || s.contains('defense') || s.contains('army')) {
+      return NjIconVariant.defence;
+    }
+    if (s.contains('andaman') ||
+        s == 'a&n' ||
+        s == 'a-n' ||
+        s.contains('nicobar')) {
       return NjIconVariant.andamanJobs;
+    }
+    if (s == 'latest' || s == 'latest-jobs' || s.contains('latest')) {
+      return NjIconVariant.latestJobs;
     }
     if (s.contains('all-india') || s.contains('all india')) {
       return NjIconVariant.allIndia;
@@ -90,12 +115,6 @@ class NjCategoryIcon extends StatelessWidget {
     if (s.contains('ssc')) {
       return NjIconVariant.ssc;
     }
-    if (s.contains('police')) {
-      return NjIconVariant.police;
-    }
-    if (s.contains('defence') || s.contains('defense') || s.contains('army')) {
-      return NjIconVariant.defence;
-    }
     if (s.contains('railway') || s.contains('rrb')) {
       return NjIconVariant.railway;
     }
@@ -113,12 +132,28 @@ class NjCategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final resolved = variant ?? resolveVariant(categorySlug);
-
     final _IconSpec spec = _getSpec(resolved);
+
     final iconData = icon ?? spec.icon;
-    final gradient = customGradient ?? spec.gradient;
-    final shadowColor = customShadowColor ?? spec.shadowColor;
+
+    List<Color> gradient = customGradient ?? spec.gradient;
+    Color shadowColor = customShadowColor ?? spec.shadowColor;
+
+    // If an explicit baseColor was passed and resolved is generic, build a dynamic 3-stop gradient
+    if (baseColor != null &&
+        customGradient == null &&
+        variant == null &&
+        resolved == NjIconVariant.general) {
+      final hsl = HSLColor.fromColor(baseColor!);
+      gradient = [
+        hsl.withLightness((hsl.lightness * 1.18).clamp(0.0, 1.0)).toColor(),
+        baseColor!,
+        hsl.withLightness((hsl.lightness * 0.72).clamp(0.0, 1.0)).toColor(),
+      ];
+      shadowColor = baseColor!;
+    }
 
     return Container(
       width: size,
@@ -133,13 +168,13 @@ class NjCategoryIcon extends StatelessWidget {
         boxShadow: [
           // Primary ambient volumetric colored glow
           BoxShadow(
-            color: shadowColor.withOpacity(0.32),
+            color: shadowColor.withOpacity(isDark ? 0.38 : 0.28),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
           // Deep crisp grounding shadow
           BoxShadow(
-            color: Colors.black.withOpacity(0.14),
+            color: Colors.black.withOpacity(isDark ? 0.32 : 0.14),
             blurRadius: 3,
             offset: const Offset(0, 1.5),
           ),
@@ -163,7 +198,7 @@ class NjCategoryIcon extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withOpacity(0.32),
+                    Colors.white.withOpacity(isDark ? 0.22 : 0.32),
                     Colors.white.withOpacity(0.0),
                   ],
                 ),
@@ -176,7 +211,7 @@ class NjCategoryIcon extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(borderRadius),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.22),
+                  color: Colors.white.withOpacity(isDark ? 0.16 : 0.24),
                   width: 1.0,
                 ),
               ),
@@ -204,6 +239,12 @@ class NjCategoryIcon extends StatelessWidget {
 
   static _IconSpec _getSpec(NjIconVariant v) {
     switch (v) {
+      case NjIconVariant.latestJobs:
+        return const _IconSpec(
+          icon: Icons.work_rounded,
+          gradient: [Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857)],
+          shadowColor: Color(0xFF059669),
+        );
       case NjIconVariant.govtJobs:
         return const _IconSpec(
           icon: Icons.account_balance_rounded,
@@ -243,8 +284,8 @@ class NjCategoryIcon extends StatelessWidget {
       case NjIconVariant.andamanJobs:
         return const _IconSpec(
           icon: Icons.waves_rounded,
-          gradient: [Color(0xFF059669), Color(0xFF047857), Color(0xFF064E3B)],
-          shadowColor: Color(0xFF059669),
+          gradient: [Color(0xFF0D9488), Color(0xFF0F766E), Color(0xFF115E59)],
+          shadowColor: Color(0xFF0D9488),
         );
       case NjIconVariant.admitCards:
         return const _IconSpec(
@@ -255,20 +296,20 @@ class NjCategoryIcon extends StatelessWidget {
       case NjIconVariant.results:
         return const _IconSpec(
           icon: Icons.emoji_events_rounded,
-          gradient: [Color(0xFFF59E0B), Color(0xFFD97706), Color(0xFFB45309)],
-          shadowColor: Color(0xFFD97706),
+          gradient: [Color(0xFFFB923C), Color(0xFFEA580C), Color(0xFF9A3412)],
+          shadowColor: Color(0xFFEA580C),
         );
       case NjIconVariant.answerKeys:
         return const _IconSpec(
           icon: Icons.fact_check_rounded,
-          gradient: [Color(0xFF06B6D4), Color(0xFF0891B2), Color(0xFF0E7490)],
-          shadowColor: Color(0xFF0891B2),
+          gradient: [Color(0xFF38BDF8), Color(0xFF0284C7), Color(0xFF0369A1)],
+          shadowColor: Color(0xFF0284C7),
         );
       case NjIconVariant.syllabus:
         return const _IconSpec(
           icon: Icons.menu_book_rounded,
-          gradient: [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF3730A3)],
-          shadowColor: Color(0xFF4F46E5),
+          gradient: [Color(0xFF64748B), Color(0xFF475569), Color(0xFF334155)],
+          shadowColor: Color(0xFF475569),
         );
       case NjIconVariant.examDates:
         return const _IconSpec(
@@ -279,13 +320,13 @@ class NjCategoryIcon extends StatelessWidget {
       case NjIconVariant.articles:
         return const _IconSpec(
           icon: Icons.article_rounded,
-          gradient: [Color(0xFF64748B), Color(0xFF475569), Color(0xFF334155)],
-          shadowColor: Color(0xFF64748B),
+          gradient: [Color(0xFF14B8A6), Color(0xFF0F766E), Color(0xFF134E4A)],
+          shadowColor: Color(0xFF0F766E),
         );
       case NjIconVariant.ssc:
         return const _IconSpec(
-          icon: Icons.verified_user_rounded,
-          gradient: [Color(0xFFFCD34D), Color(0xFFF59E0B), Color(0xFFB45309)],
+          icon: Icons.account_balance_rounded,
+          gradient: [Color(0xFFFBBF24), Color(0xFFF59E0B), Color(0xFFB45309)],
           shadowColor: Color(0xFFF59E0B),
         );
       case NjIconVariant.police:
@@ -293,6 +334,18 @@ class NjCategoryIcon extends StatelessWidget {
           icon: Icons.shield_rounded,
           gradient: [Color(0xFF0284C7), Color(0xFF0369A1), Color(0xFF075985)],
           shadowColor: Color(0xFF0284C7),
+        );
+      case NjIconVariant.policeDefence:
+        return const _IconSpec(
+          icon: Icons.shield_rounded,
+          gradient: [Color(0xFF2563EB), Color(0xFF1D4ED8), Color(0xFF1E3A8A)],
+          shadowColor: Color(0xFF1D4ED8),
+        );
+      case NjIconVariant.irbnPolice:
+        return const _IconSpec(
+          icon: Icons.local_police_rounded,
+          gradient: [Color(0xFF1E3A8A), Color(0xFF172554), Color(0xFF0F172A)],
+          shadowColor: Color(0xFF1E3A8A),
         );
       case NjIconVariant.defence:
         return const _IconSpec(
@@ -302,14 +355,14 @@ class NjCategoryIcon extends StatelessWidget {
         );
       case NjIconVariant.railway:
         return const _IconSpec(
-          icon: Icons.train_rounded,
-          gradient: [Color(0xFF0284C7), Color(0xFF0369A1), Color(0xFF075985)],
-          shadowColor: Color(0xFF0284C7),
+          icon: Icons.directions_railway_rounded,
+          gradient: [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
+          shadowColor: Color(0xFFDC2626),
         );
       case NjIconVariant.banking:
         return const _IconSpec(
-          icon: Icons.account_balance_rounded,
-          gradient: [Color(0xFF818CF8), Color(0xFF4F46E5), Color(0xFF312E81)],
+          icon: Icons.payments_rounded,
+          gradient: [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF312E81)],
           shadowColor: Color(0xFF4F46E5),
         );
       case NjIconVariant.general:
@@ -319,6 +372,85 @@ class NjCategoryIcon extends StatelessWidget {
           shadowColor: Color(0xFF2563EB),
         );
     }
+  }
+}
+
+/// Interactive elevated category tile for Home Screen Quick Categories.
+///
+/// Features:
+/// - Soft 3D elevated NjCategoryIcon with specular highlight and ambient glow
+/// - Spring micro-interaction: smooth press scale (0.94) for 120ms with haptic feedback
+/// - 2-line centered, high-contrast typography with equal vertical alignment
+class NjQuickCategoryTile extends StatefulWidget {
+  final String label;
+  final String slug;
+  final IconData? icon;
+  final Color? baseColor;
+  final VoidCallback onTap;
+
+  const NjQuickCategoryTile({
+    super.key,
+    required this.label,
+    required this.slug,
+    this.icon,
+    this.baseColor,
+    required this.onTap,
+  });
+
+  @override
+  State<NjQuickCategoryTile> createState() => _NjQuickCategoryTileState();
+}
+
+class _NjQuickCategoryTileState extends State<NjQuickCategoryTile> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            NjCategoryIcon(
+              categorySlug: widget.slug,
+              icon: widget.icon,
+              baseColor: widget.baseColor,
+              size: 44.0,
+              iconSize: 22.0,
+              borderRadius: 13.0,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.0,
+                fontWeight: FontWeight.w600,
+                height: 1.15,
+                color:
+                    isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

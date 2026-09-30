@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Screen 1: Official Notify Jobs Splash Screen
-/// Visual direction matching approved visual design:
-/// - Clean white/light canvas with subtle government watermark & smooth orange wave curves
-/// - Official Notify Jobs logo (bell squircle badge + bold NJ + "NOTIFY JOBS")
-/// - Orange accent divider bar + "Government Job Alerts & Exam Updates"
-/// - Fast, lightweight startup transition directly to Home
+/// Visual Architecture:
+/// - Pure decorative background artwork (subtle government silhouette + bottom orange curves)
+/// - SINGLE rendering of Notify Jobs logo, title, and tagline in Flutter
+/// - Fully responsive across 320x568 to 412x915+ viewports
+/// - Seamless native Android splash -> Flutter splash handoff
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -29,7 +29,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     );
 
     _fadeAnim = CurvedAnimation(
@@ -40,14 +40,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _scaleAnim = Tween<double>(begin: 0.94, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOutBack,
+        curve: Curves.easeOutCubic,
       ),
     );
 
     _controller.forward();
 
-    // Fast transition to Home without artificial delay
-    _navTimer = Timer(const Duration(milliseconds: 1100), () {
+    // Fast, seamless transition to Home without unnecessary waiting
+    _navTimer = Timer(const Duration(milliseconds: 950), () {
       _navigateNext();
     });
   }
@@ -61,7 +61,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _navigateNext() {
     if (!mounted) return;
-    context.go('/');
+    try {
+      if (GoRouter.maybeOf(context) != null) {
+        context.go('/');
+      } else if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -76,7 +82,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // 1. High-fidelity Splash Background with government silhouette and orange curves
+              // 1. High-fidelity Pure Decorative Background Artwork (No text, No duplicate logo)
               Image.asset(
                 'assets/branding/splash_bg.png',
                 fit: BoxFit.cover,
@@ -84,99 +90,111 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 height: double.infinity,
               ),
 
-              // 2. Center Branding Content with smooth entrance animation
-              Center(
-                child: FadeTransition(
-                  opacity: _fadeAnim,
-                  child: ScaleTransition(
-                    scale: _scaleAnim,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Official Notify Jobs Icon Badge
-                          Container(
-                            width: 110,
-                            height: 110,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      AppColors.brandOrange.withOpacity(0.18),
-                                  blurRadius: 28,
-                                  offset: const Offset(0, 10),
+              // 2. Responsive Center Branding Content
+              SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isSmallScreen = constraints.maxHeight < 640;
+                    final logoSize = isSmallScreen ? 88.0 : 104.0;
+                    final titleSize = isSmallScreen ? 20.0 : 23.0;
+                    final subtitleSize = isSmallScreen ? 12.0 : 13.5;
+                    final verticalSpacing = isSmallScreen ? 14.0 : 20.0;
+
+                    return Center(
+                      child: FadeTransition(
+                        opacity: _fadeAnim,
+                        child: ScaleTransition(
+                          scale: _scaleAnim,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Official Notify Jobs App Icon Badge
+                                Container(
+                                  width: logoSize,
+                                  height: logoSize,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(22),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.brandOrange
+                                            .withOpacity(0.18),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.06),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(22),
+                                    child: Image.asset(
+                                      'assets/branding/notify_jobs_icon.png',
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
                                 ),
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 4),
+                                SizedBox(height: verticalSpacing),
+
+                                // Single Typography Branding: NOTIFY JOBS
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'NOTIFY ',
+                                      style: TextStyle(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 2.2,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    Text(
+                                      'JOBS',
+                                      style: TextStyle(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 2.2,
+                                        color: AppColors.brandOrange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+
+                                // Subtle Accent Divider
+                                Container(
+                                  width: 38,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.brandOrange,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Single Clean Subtitle
+                                Text(
+                                  'Government Job Alerts & Exam Updates',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: subtitleSize,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF475569),
+                                    letterSpacing: 0.25,
+                                  ),
                                 ),
                               ],
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: Image.asset(
-                                'assets/branding/notify_jobs_icon.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
                           ),
-                          const SizedBox(height: 22),
-
-                          // Typography: NOTIFY JOBS
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Text(
-                                'NOTIFY ',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.4,
-                                  color: Color(0xFF111111),
-                                ),
-                              ),
-                              Text(
-                                'JOBS',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.4,
-                                  color: AppColors.brandOrange,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Orange Accent Divider Bar
-                          Container(
-                            width: 44,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: AppColors.brandOrange,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Subtitle
-                          const Text(
-                            'Government Job Alerts & Exam Updates',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF334155),
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],

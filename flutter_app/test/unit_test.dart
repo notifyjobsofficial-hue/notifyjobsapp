@@ -13,6 +13,9 @@ import 'package:notify_jobs/core/services/storage_service.dart';
 import 'package:notify_jobs/core/services/admob_service.dart';
 import 'package:notify_jobs/core/config/admob_config.dart';
 import 'package:notify_jobs/core/widgets/nj_official_source_sheet.dart';
+import 'package:notify_jobs/core/services/view_count_service.dart';
+import 'package:notify_jobs/core/services/notification_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -338,6 +341,36 @@ void main() {
       expect(settings.latestJobsMaxItems, 12);
       expect(settings.socialSectionEnabled, isFalse);
     });
+
+    test('Correctly parses Social and Global Share Destination settings', () {
+      // Defaults test
+      final defaultSettings = AppSettingsModel.fromMap({});
+      expect(defaultSettings.websiteUrl, 'https://notifyjobs.in');
+      expect(defaultSettings.shareEnabled, isTrue);
+      expect(defaultSettings.shareTargetMode, 'SMART');
+      expect(defaultSettings.shareMessageTemplate, contains('{title}'));
+      expect(defaultSettings.whatsappEnabled, isTrue);
+      expect(defaultSettings.telegramEnabled, isTrue);
+
+      // Custom settings test
+      final customSettings = AppSettingsModel.fromMap({
+        'websiteUrl': 'https://customportal.com',
+        'shareEnabled': false,
+        'shareTargetMode': 'WEBSITE',
+        'shareMessageTemplate': 'Custom: {title} -> {shareUrl}',
+        'whatsappEnabled': false,
+        'whatsappUrl': 'https://chat.whatsapp.com/123',
+        'telegramEnabled': true,
+        'telegramUrl': 'https://t.me/notifyjobs',
+      });
+      expect(customSettings.websiteUrl, 'https://customportal.com');
+      expect(customSettings.shareEnabled, isFalse);
+      expect(customSettings.shareTargetMode, 'WEBSITE');
+      expect(
+          customSettings.shareMessageTemplate, 'Custom: {title} -> {shareUrl}');
+      expect(customSettings.whatsappEnabled, isFalse);
+      expect(customSettings.telegramEnabled, isTrue);
+    });
   });
 
   group('NormalizationUtils Tests', () {
@@ -447,6 +480,104 @@ void main() {
       expect(url, 'https://upsconline.nic.in');
     });
 
+    test('Resolves PLAY_STORE mode directly to Google Play Store URL', () {
+      final job = ContentModel.fromMap({
+        'title': 'SSC GD Constable 2026',
+        'slug': 'ssc-gd-constable-2026',
+        'contentType': 'government_job',
+        'applyUrl': 'https://ssc.gov.in',
+      }, 'job_play');
+      final settings = AppSettingsModel.fromMap({
+        'shareTargetMode': 'PLAY_STORE',
+        'playStoreUrl':
+            'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
+      });
+      final url = ShareService.resolveShareUrl(
+        content: job,
+        settings: settings,
+      );
+      expect(url,
+          'https://play.google.com/store/apps/details?id=com.notifyjobs.app');
+    });
+
+    test(
+        'Resolves WEBSITE mode with slug and strictly avoids raw Firestore IDs',
+        () {
+      final job = ContentModel.fromMap({
+        'title': 'IBPS PO 2026',
+        'slug': 'ibps-po-recruitment-2026',
+        'contentType': 'government_job',
+      }, 'RAW_FIRESTORE_DOC_ID_9999');
+      final settings = AppSettingsModel.fromMap({
+        'websiteUrl': 'https://notifyjobs.in',
+        'shareTargetMode': 'WEBSITE',
+      });
+      final url = ShareService.resolveShareUrl(
+        content: job,
+        settings: settings,
+      );
+      expect(url, 'https://notifyjobs.in/jobs/ibps-po-recruitment-2026');
+      expect(url, isNot(contains('RAW_FIRESTORE_DOC_ID_9999')));
+    });
+
+    test('Resolves SMART mode prioritizing web slug over play store fallback',
+        () {
+      final jobWithSlug = ContentModel.fromMap({
+        'title': 'Railway NTPC 2026',
+        'slug': 'railway-ntpc-2026',
+        'contentType': 'government_job',
+      }, 'job_smart');
+      final settings = AppSettingsModel.fromMap({
+        'websiteUrl': 'https://notifyjobs.in',
+        'shareTargetMode': 'SMART',
+      });
+      final urlWithSlug = ShareService.resolveShareUrl(
+        content: jobWithSlug,
+        settings: settings,
+      );
+      expect(urlWithSlug, 'https://notifyjobs.in/jobs/railway-ntpc-2026');
+
+      // If no slug and no applyUrl, SMART falls back to Play Store URL
+      final jobNoSlug = ContentModel.fromMap({
+        'title': 'Urgent Walk-in Notice',
+        'slug': '',
+        'contentType': 'government_job',
+      }, 'job_noslug');
+      final urlNoSlug = ShareService.resolveShareUrl(
+        content: jobNoSlug,
+        settings: settings,
+      );
+      expect(urlNoSlug, settings.playStoreUrl);
+    });
+
+    test('Respects per-post share target override and validates HTTPS', () {
+      // 1. Valid HTTPS custom URL override
+      final jobCustom = ContentModel.fromMap({
+        'title': 'Special Andaman Recruitment',
+        'slug': 'special-andaman-2026',
+        'shareTargetModeOverride': 'CUSTOM_URL',
+        'customShareUrl': 'https://andaman.gov.in/special-drive',
+      }, 'job_override_1');
+      final urlCustom = ShareService.resolveShareUrl(content: jobCustom);
+      expect(urlCustom, 'https://andaman.gov.in/special-drive');
+
+      // 2. Invalid non-HTTPS URL override safely falls back
+      final jobInvalid = ContentModel.fromMap({
+        'title': 'Test Insecure Post',
+        'slug': 'insecure-post',
+        'shareTargetModeOverride': 'CUSTOM_URL',
+        'customShareUrl': 'ftp://unsafe.com/file',
+      }, 'job_override_2');
+      final settings = AppSettingsModel.fromMap({
+        'websiteUrl': 'https://notifyjobs.in',
+      });
+      final urlInvalid = ShareService.resolveShareUrl(
+        content: jobInvalid,
+        settings: settings,
+      );
+      expect(urlInvalid, 'https://notifyjobs.in/jobs/insecure-post');
+    });
+
     test('Formats rich share message with title and vacancies', () {
       final job = ContentModel.fromMap({
         'title': 'SSC CGL 2026',
@@ -464,6 +595,20 @@ void main() {
       expect(msg, contains('Staff Selection Commission'));
       expect(msg, contains('14,582 Posts'));
       expect(msg, contains('https://notifyjobsapp.pages.dev/job/ssc-cgl-2026'));
+    });
+
+    test('Formats clean share message without null, undefined, or N/A', () {
+      final jobEmptyFields = ContentModel.fromMap({
+        'title': 'Defence Civilian Recruitment',
+        'contentType': 'government_job',
+      }, 'job_clean');
+      final msg = ShareService.formatShareMessage(content: jobEmptyFields);
+
+      expect(msg, isNot(contains('null')));
+      expect(msg, isNot(contains('undefined')));
+      expect(msg, isNot(contains('N/A')));
+      expect(msg, contains('Defence Civilian Recruitment'));
+      expect(msg, contains('Download Notify Jobs App'));
     });
   });
 
@@ -1750,6 +1895,130 @@ void main() {
       expect(customControls.showSalary, isFalse);
       expect(customControls.showExamDetails, isFalse);
       expect(customControls.showPosts, isTrue); // default true when omitted
+    });
+  });
+
+  group('Real Total View Counts & Anti-Inflation Throttling Tests', () {
+    test('ContentModel parses canonical viewCount correctly', () {
+      final model = ContentModel.fromMap({
+        'title': 'UPSC CSE 2026',
+        'viewCount': 428,
+        'views': 400, // Should prefer viewCount
+      }, 'upsc-1');
+
+      expect(model.viewCount, equals(428));
+      expect(model.views, equals(428)); // Backward compatible getter
+    });
+
+    test('ContentModel falls back to views when viewCount is omitted', () {
+      final model = ContentModel.fromMap({
+        'title': 'SSC CHSL 2026',
+        'views': 125,
+      }, 'ssc-chsl');
+
+      expect(model.viewCount, equals(125));
+      expect(model.views, equals(125));
+    });
+
+    test('ContentModel defaults to 0 when both are missing', () {
+      final model = ContentModel.fromMap({
+        'title': 'Brand New Notice',
+      }, 'notice-new');
+
+      expect(model.viewCount, equals(0));
+      expect(model.views, equals(0));
+    });
+
+    test('ContentModel toMap serializes both viewCount and views', () {
+      final model = ContentModel.fromMap({
+        'title': 'Andaman Forest Guard',
+        'contentType': 'andaman_job',
+        'viewCount': 88,
+      }, 'job-map-test');
+
+      final map = model.toMap();
+      expect(map['viewCount'], equals(88));
+      expect(map['views'], equals(88));
+    });
+
+    test(
+        'ViewCountService throttles duplicate view recordings within 30 minutes',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = ViewCountService(
+        prefs: prefs,
+        workerUrl: '', // Disable network calls in test
+      );
+
+      // Verify not throttled initially
+      expect(service.isThrottled('test-post-1'), isFalse);
+
+      // Simulate a recorded view at current time
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await prefs.setInt('nj_view_throttle_test-post-1', nowMs);
+
+      // Check immediately after: must be throttled
+      expect(service.isThrottled('test-post-1'), isTrue);
+
+      // Attempting to record should return false due to throttling
+      final result = await service.recordView('test-post-1');
+      expect(result, isFalse);
+    });
+
+    test(
+        'ViewCountService allows recording after throttle window expires (> 30 mins)',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = ViewCountService(
+        prefs: prefs,
+        workerUrl: '',
+      );
+
+      // Set timestamp 35 minutes ago
+      final thirtyFiveMinsAgo = DateTime.now()
+          .subtract(const Duration(minutes: 35))
+          .millisecondsSinceEpoch;
+      await prefs.setInt('nj_view_throttle_test-post-2', thirtyFiveMinsAgo);
+
+      // Should no longer be throttled
+      expect(service.isThrottled('test-post-2'), isFalse);
+    });
+
+    test('ViewCountService rejects empty contentId gracefully', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = ViewCountService(prefs: prefs, workerUrl: '');
+
+      final result = await service.recordView('   ');
+      expect(result, isFalse);
+    });
+  });
+
+  group('Notification Alerts & Channel Verification Tests', () {
+    test(
+        'NotificationService defines notify_jobs_alerts channel with max importance',
+        () {
+      expect(NotificationService.channelId, equals('notify_jobs_alerts'));
+      expect(NotificationService.channelName, equals('Notify Jobs Alerts'));
+      expect(
+          NotificationService.androidChannel.id, equals('notify_jobs_alerts'));
+      expect(NotificationService.androidChannel.importance,
+          equals(Importance.max));
+      expect(NotificationService.androidChannel.playSound, isTrue);
+      expect(NotificationService.androidChannel.enableVibration, isTrue);
+    });
+
+    test(
+        'NotificationService core broadcast topics include all_users, all_updates, and all_jobs',
+        () {
+      expect(NotificationService.coreTopics, contains('all_users'));
+      expect(NotificationService.coreTopics, contains('all_updates'));
+      expect(NotificationService.coreTopics, contains('all_jobs'));
+      expect(NotificationService.coreTopics, contains('andaman'));
+      expect(NotificationService.coreTopics, contains('admit_cards'));
+      expect(NotificationService.coreTopics, contains('results'));
     });
   });
 }

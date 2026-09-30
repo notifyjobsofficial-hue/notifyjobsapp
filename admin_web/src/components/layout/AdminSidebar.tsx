@@ -26,12 +26,14 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  Cpu,
 } from 'lucide-react';
 
 export type NavView =
   | 'dashboard'
   | 'content_all'
   | 'content_add'
+  | 'automation'
   // Jobs
   | 'jobs_all'
   | 'jobs_govt'
@@ -450,6 +452,38 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   {counts.articles_all}
                 </span>
               )}
+            </button>
+          </div>
+
+          {/* AUTOMATION & PIPELINE */}
+          <div className="space-y-1">
+            <h2 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Automation &amp; Pipeline
+            </h2>
+            <button
+              onClick={() => {
+                onNavigate('automation');
+                onClose();
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                currentView === 'automation'
+                  ? 'bg-[#159B76] text-white font-semibold shadow-sm shadow-[#159B76]/25'
+                  : 'text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/70 hover:text-emerald-900 font-semibold'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Cpu className={`w-4 h-4 ${currentView === 'automation' ? 'text-white' : 'text-[#159B76]'}`} />
+                <span>AI Ingestion Pipeline</span>
+              </div>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase tracking-wider ${
+                  currentView === 'automation'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#159B76] text-white'
+                }`}
+              >
+                Auto
+              </span>
             </button>
           </div>
 

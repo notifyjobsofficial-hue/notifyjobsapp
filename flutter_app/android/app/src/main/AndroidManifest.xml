@@ -17,13 +17,13 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}"/>
 
-        <!-- Default Notification Channel and Icon metadata -->
+        <!-- Default Notification Channel and Icon metadata (Specification 16 & 17) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="notify_jobs_channel"/>
+            android:value="notify_jobs_alerts"/>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
+            android:resource="@drawable/ic_stat_notify_jobs" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notification_accent" />

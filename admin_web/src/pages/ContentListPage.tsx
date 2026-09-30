@@ -29,6 +29,7 @@ import {
   BookOpen,
   Newspaper,
   RotateCcw,
+  Eye,
 } from 'lucide-react';
 import { ContentItem, ContentType, ContentStatus, Category, StatusOverride } from '../types';
 import { AdminButton } from '../components/common/AdminButton';
@@ -170,7 +171,7 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
           case 'deadline_asc':
             return (a.applicationLastDate || '9999').localeCompare(b.applicationLastDate || '9999');
           case 'views_desc':
-            return (b.views || 0) - (a.views || 0);
+            return ((b.viewCount ?? b.views) || 0) - ((a.viewCount ?? a.views) || 0);
           case 'title_asc':
             return a.title.localeCompare(b.title);
           case 'updated_desc':
@@ -542,6 +543,7 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                 <th className="py-3.5 px-3 min-w-[180px]">Categories</th>
                 <th className="py-3.5 px-3 whitespace-nowrap text-center">Post Count</th>
                 <th className="py-3.5 px-3 whitespace-nowrap text-center">Total Vacancies</th>
+                <th className="py-3.5 px-3 whitespace-nowrap text-center">Views</th>
                 <th className="py-3.5 px-3 whitespace-nowrap">Status</th>
                 <th className="py-3.5 px-3 whitespace-nowrap">Updated Date</th>
                 <th className="py-3.5 px-5 text-right whitespace-nowrap">Actions</th>
@@ -550,7 +552,7 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
             <tbody className="divide-y divide-slate-100 text-sm">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center">
+                  <td colSpan={8} className="py-16 text-center">
                     <div className="max-w-sm mx-auto flex flex-col items-center gap-2.5">
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
                         <FileText className="w-6 h-6" />
@@ -659,6 +661,14 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
                       <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200/60">
                           {totalVacanciesDisplay}
+                        </span>
+                      </td>
+
+                      {/* Views */}
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200/80">
+                          <Eye className="w-3.5 h-3.5 text-slate-400" />
+                          {Number(item.viewCount ?? item.views ?? 0).toLocaleString()}
                         </span>
                       </td>
 
@@ -836,8 +846,9 @@ export const ContentListPage: React.FC<ContentListPageProps> = ({
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-slate-400 font-medium">
-                  {(item.views || 0).toLocaleString()} views
+                <span className="text-xs text-slate-500 font-semibold inline-flex items-center gap-1">
+                  <Eye className="w-3.5 h-3.5 text-slate-400" />
+                  {Number(item.viewCount ?? item.views ?? 0).toLocaleString()} views
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button

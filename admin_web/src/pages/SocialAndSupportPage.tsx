@@ -189,6 +189,100 @@ export const SocialAndSupportPage: React.FC<SocialAndSupportPageProps> = ({
         </div>
       </AdminCard>
 
+      {/* Global Share & Web Portal Settings */}
+      <AdminCard
+        title="Global Share & Web Portal Settings"
+        subtitle="Control where shared links point (Web Portal, Play Store, or Smart) and customize the default message"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <AdminInput
+              label="Notify Jobs Official Website / Portal URL"
+              type="url"
+              value={settings.websiteUrl || settings.shareBaseUrl || ''}
+              onChange={(e) => {
+                handleUpdate('websiteUrl', e.target.value);
+                handleUpdate('shareBaseUrl', e.target.value);
+              }}
+              placeholder="https://notifyjobs.in"
+            />
+            <AdminInput
+              label="Google Play Store App URL"
+              type="url"
+              value={settings.playStoreUrl || ''}
+              onChange={(e) => handleUpdate('playStoreUrl', e.target.value)}
+              placeholder="https://play.google.com/store/apps/details?id=com.notifyjobs.app"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Share Destination Mode
+              </label>
+              <select
+                value={settings.shareTargetMode || 'SMART'}
+                onChange={(e) =>
+                  handleUpdate('shareTargetMode', e.target.value as any)
+                }
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#159B76]/20 focus:border-[#159B76]"
+              >
+                <option value="SMART">
+                  SMART (Web Slug if available, else Play Store)
+                </option>
+                <option value="WEBSITE">
+                  WEBSITE (Always link to Web Portal)
+                </option>
+                <option value="PLAY_STORE">
+                  PLAY_STORE (Always link to Google Play Store)
+                </option>
+              </select>
+              <p className="text-[11px] text-slate-500 mt-1">
+                SMART generates web links using the slug (never raw IDs).
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100 self-start">
+              <div>
+                <span className="text-xs font-bold text-slate-800 block">
+                  Enable App-Wide Sharing
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Show share buttons across job cards, details &amp; updates
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.shareEnabled !== false}
+                onChange={(e) => handleUpdate('shareEnabled', e.target.checked)}
+                className="w-4 h-4 rounded text-[#159B76] focus:ring-[#159B76]"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Default Share Message Template
+            </label>
+            <textarea
+              rows={4}
+              value={
+                settings.shareMessageTemplate ??
+                '{title}\n\nOrganization: {organization}\nVacancies: {vacancies}\nLast Date: {lastDate}\n\nCheck official details & apply:\n{shareUrl}\n\nGet Notify Jobs for instant job alerts:\n{playStoreUrl}'
+              }
+              onChange={(e) =>
+                handleUpdate('shareMessageTemplate', e.target.value)
+              }
+              placeholder="{title}\n\nOrganization: {organization}\nVacancies: {vacancies}\nLast Date: {lastDate}\n\nCheck official details & apply:\n{shareUrl}\n\nGet Notify Jobs for instant job alerts:\n{playStoreUrl}"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#159B76]/20 focus:border-[#159B76]"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Available tags: <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;title&#125;</code>, <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;organization&#125;</code>, <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;vacancies&#125;</code>, <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;lastDate&#125;</code>, <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;shareUrl&#125;</code>, <code className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">&#123;playStoreUrl&#125;</code>
+            </p>
+          </div>
+        </div>
+      </AdminCard>
+
       {/* Legal & Policy Pages */}
       <AdminCard
         title="Legal & Compliance Links"

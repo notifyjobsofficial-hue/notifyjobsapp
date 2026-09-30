@@ -30,10 +30,11 @@ export const NotificationManagerPage: React.FC<NotificationManagerPageProps> = (
 }) => {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [topic, setTopic] = useState('all_updates');
+  const [topic, setTopic] = useState('all_users');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [resultMessage, setResultMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -97,6 +98,38 @@ export const NotificationManagerPage: React.FC<NotificationManagerPageProps> = (
     }
   };
 
+  const handleSendTestNotification = async () => {
+    setTestLoading(true);
+    setResultMessage(null);
+    try {
+      const res = await sendPushNotification({
+        title: 'Notify Jobs Test Alert',
+        body: 'End-to-end FCM verification test. Notification channels and delivery are operating properly.',
+        topic: 'all_users',
+      });
+
+      if (res.success) {
+        setResultMessage({
+          type: 'success',
+          text: `Test notification broadcasted to all_users! Message ID: ${res.messageId}`,
+        });
+        onRefreshLogs();
+      } else {
+        setResultMessage({
+          type: 'error',
+          text: `Test dispatch failed: ${res.error}`,
+        });
+      }
+    } catch (err: any) {
+      setResultMessage({
+        type: 'error',
+        text: err?.message || 'Error communicating with Cloudflare Worker',
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -157,16 +190,19 @@ export const NotificationManagerPage: React.FC<NotificationManagerPageProps> = (
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 options={[
+                  { value: 'all_users', label: 'all_users (Recommended - All Installed Devices)' },
                   { value: 'all_updates', label: 'all_updates (Entire App Audience)' },
                   { value: 'jobs', label: 'jobs (All Government Job Seekers)' },
+                  { value: 'all_jobs', label: 'all_jobs (Alternative Job Topic)' },
                   { value: 'andaman', label: 'andaman (Andaman & Nicobar Islands)' },
+                  { value: 'andaman_jobs', label: 'andaman_jobs (Andaman Job Alerts)' },
+                  { value: 'results', label: 'results (Results & Merit Lists)' },
+                  { value: 'admit_cards', label: 'admit_cards (Admit Cards / Call Letters)' },
+                  { value: 'answer_keys', label: 'answer_keys (Answer Keys)' },
                   { value: 'ssc', label: 'ssc (Staff Selection Commission)' },
                   { value: 'railway', label: 'railway (RRB Aspirants)' },
                   { value: 'banking', label: 'banking (IBPS, SBI & PSBs)' },
                   { value: 'police', label: 'police (Police & Defence)' },
-                  { value: 'results', label: 'results (Results & Merit Lists)' },
-                  { value: 'admit_cards', label: 'admit_cards (Admit Cards / Call Letters)' },
-                  { value: 'answer_keys', label: 'answer_keys (Answer Keys)' },
                 ]}
               />
 
@@ -204,7 +240,18 @@ export const NotificationManagerPage: React.FC<NotificationManagerPageProps> = (
                 placeholder="https://..."
               />
 
-              <div className="pt-2 flex items-center justify-end">
+              <div className="pt-2 flex items-center justify-between gap-3">
+                <AdminButton
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  loading={testLoading}
+                  onClick={handleSendTestNotification}
+                  icon={<Bell className="w-4 h-4 text-emerald-600" />}
+                >
+                  Send Test Alert (all_users)
+                </AdminButton>
+
                 <AdminButton
                   type="submit"
                   variant="primary"

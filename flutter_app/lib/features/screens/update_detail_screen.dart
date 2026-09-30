@@ -15,13 +15,31 @@ import '../../core/widgets/nj_official_source_sheet.dart';
 import '../../core/widgets/nj_section_header.dart';
 import '../../core/widgets/nj_share_sheet.dart';
 import '../../core/utils/normalization_utils.dart';
+import '../../core/services/view_count_service.dart';
 
 /// Specialized Detail Screen for Exam Updates:
 /// Admit Cards, Results, Answer Keys, and Syllabus (Specification 53–57)
-class UpdateDetailScreen extends ConsumerWidget {
+class UpdateDetailScreen extends ConsumerStatefulWidget {
   final String id;
 
   const UpdateDetailScreen({super.key, required this.id});
+
+  @override
+  ConsumerState<UpdateDetailScreen> createState() => _UpdateDetailScreenState();
+}
+
+class _UpdateDetailScreenState extends ConsumerState<UpdateDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(viewCountServiceProvider)
+            .recordView(widget.id, contentType: 'update');
+      }
+    });
+  }
 
   Future<void> _launchExternalUrl(
       BuildContext context, String? urlString) async {
@@ -77,10 +95,10 @@ class UpdateDetailScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final item = ref.watch(contentByIdProvider(id));
-    final isSaved = ref.watch(isSavedProvider(id));
+    final item = ref.watch(contentByIdProvider(widget.id));
+    final isSaved = ref.watch(isSavedProvider(widget.id));
     final appSettings = ref.watch(appSettingsProvider);
 
     if (item == null) {

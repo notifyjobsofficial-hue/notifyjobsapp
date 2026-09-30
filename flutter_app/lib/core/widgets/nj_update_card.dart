@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'nj_card.dart';
 import 'nj_badge.dart';
+import 'nj_new_badge.dart';
 import 'nj_icon_container.dart';
 import '../../features/models/content_model.dart';
 
@@ -114,23 +115,7 @@ class NjUpdateCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         if (item.isNew(newBadgeDurationDays)) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'NEW',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                          ),
+                          const NjNewBadge(),
                           const SizedBox(width: 4),
                         ],
                         Flexible(

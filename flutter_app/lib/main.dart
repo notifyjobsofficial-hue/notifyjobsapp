@@ -18,8 +18,7 @@ import 'core/utils/performance_tracker.dart';
 import 'features/navigation/app_router.dart';
 import 'features/screens/maintenance_screen.dart';
 import 'features/screens/update_required_screen.dart';
-import 'features/providers/content_providers.dart';
-import 'features/providers/notification_providers.dart';
+import 'core/services/notification_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -32,28 +31,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> _initBackgroundServices(StorageService storageService) async {
-  // Non-blocking background initialization: FCM & AdMob
+  // Non-blocking background initialization: FCM background & AdMob
   try {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    final messaging = FirebaseMessaging.instance;
-    final notifSettings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-    debugPrint(
-        'User notification permission status: ${notifSettings.authorizationStatus}');
-
-    final isFirstLaunch =
-        storageService.getBool('is_first_launch', defaultValue: true);
-    if (isFirstLaunch) {
-      await messaging.subscribeToTopic('all_jobs');
-      await messaging.subscribeToTopic('admit_cards');
-      await messaging.subscribeToTopic('results');
-      await storageService.setBool('is_first_launch', false);
-    }
   } catch (e) {
     debugPrint('Background Firebase Messaging note: $e');
   }
@@ -123,72 +103,9 @@ class _NotifyJobsAppState extends ConsumerState<NotifyJobsApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PerformanceTracker.mark('FirstFrame');
       PerformanceTracker.mark('HomeShell');
+      // Initialize full notification lifecycle (channel, icon, foreground alert, deep links, core topics)
+      ref.read(notificationServiceProvider).initialize(ref);
     });
-    _setupInteractedMessage();
-  }
-
-  Future<void> _setupInteractedMessage() async {
-    try {
-      // Check if opened from terminated state
-      final initialMessage =
-          await FirebaseMessaging.instance.getInitialMessage();
-      if (initialMessage != null) {
-        _handleFcmMessage(initialMessage);
-      }
-
-      // Listen to notification opens while app is backgrounded
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleFcmMessage);
-
-      // Listen to foreground notifications
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint(
-            'Foreground FCM notification: ${message.notification?.title}');
-        ref.invalidate(firestoreContentStreamProvider);
-      });
-    } catch (_) {}
-  }
-
-  void _handleFcmMessage(RemoteMessage message) {
-    try {
-      final route = message.data['route'] ?? message.data['target_url'];
-      final contentId = message.data['contentId'] ??
-          message.data['jobId'] ??
-          message.data['id'];
-
-      if (contentId != null && contentId.toString().isNotEmpty) {
-        ref
-            .read(notificationStateProvider.notifier)
-            .markItemRead(contentId.toString());
-      }
-
-      if (route != null && route.toString().isNotEmpty) {
-        appRouter.push(route.toString());
-        return;
-      }
-
-      if (contentId != null && contentId.toString().isNotEmpty) {
-        final category = (message.data['category'] ??
-                message.data['contentType'] ??
-                'latest_jobs')
-            .toString()
-            .toLowerCase();
-        if (category == 'latest_jobs' ||
-            category == 'andaman_job' ||
-            category == 'private_job' ||
-            category == 'job' ||
-            category == 'jobs' ||
-            category == 'government_job') {
-          appRouter.push('/job/$contentId');
-        } else if (category == 'article') {
-          appRouter.push('/article/$contentId');
-        } else {
-          // admit_card, result, answer_key, exam_date, syllabus, govt_update
-          appRouter.push('/update/$contentId');
-        }
-      }
-    } catch (e) {
-      debugPrint('Error handling FCM notification route: $e');
-    }
   }
 
   @override

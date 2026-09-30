@@ -1,27 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../../features/models/content_model.dart';
+import '../../features/models/app_settings_model.dart';
+import '../../features/providers/app_settings_provider.dart';
 import '../services/share_service.dart';
+import 'social_brand_icon.dart';
 
 /// Premium Context-Aware Social Share Bottom Sheet (Specification 26–30 & 129)
-class NjShareSheet extends StatelessWidget {
+class NjShareSheet extends ConsumerWidget {
   final ContentModel content;
   final String shareBaseUrl;
+  final AppSettingsModel? appSettings;
 
   const NjShareSheet({
     super.key,
     required this.content,
-    required this.shareBaseUrl,
+    this.shareBaseUrl = '',
+    this.appSettings,
   });
 
   static Future<void> show(
     BuildContext context, {
     required ContentModel content,
     String shareBaseUrl = '',
+    AppSettingsModel? appSettings,
   }) {
     HapticFeedback.selectionClick();
     return showModalBottomSheet(
@@ -31,29 +38,31 @@ class NjShareSheet extends StatelessWidget {
       builder: (_) => NjShareSheet(
         content: content,
         shareBaseUrl: shareBaseUrl,
+        appSettings: appSettings,
       ),
     );
   }
 
-  String _generateShareText() {
-    return ShareService.formatShareMessage(
-      content: content,
-      configuredBaseUrl: shareBaseUrl,
-    );
-  }
-
-  String _getShareUrl() {
-    return ShareService.resolveShareUrl(
-      content: content,
-      configuredBaseUrl: shareBaseUrl,
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shareText = _generateShareText();
-    final shareUrl = _getShareUrl();
+    final settings = appSettings ?? ref.watch(appSettingsProvider);
+    final siteUrl = settings?.websiteUrl ?? '';
+    final fallbackBaseUrl = settings?.shareBaseUrl ?? '';
+    final effectiveBaseUrl = shareBaseUrl.isNotEmpty
+        ? shareBaseUrl
+        : (siteUrl.isNotEmpty ? siteUrl : fallbackBaseUrl);
+
+    final shareText = ShareService.formatShareMessage(
+      content: content,
+      settings: settings,
+      configuredBaseUrl: effectiveBaseUrl,
+    );
+    final shareUrl = ShareService.resolveShareUrl(
+      content: content,
+      settings: settings,
+      configuredBaseUrl: effectiveBaseUrl,
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -109,10 +118,12 @@ class NjShareSheet extends StatelessWidget {
               children: [
                 // 1. WhatsApp
                 _buildShareTarget(
-                  icon: Icons.chat_bubble_outline_rounded,
+                  iconWidget: const SocialBrandIcon.whatsapp(
+                    size: 28,
+                    withBackground: true,
+                    containerSize: 54,
+                  ),
                   label: 'WhatsApp',
-                  bgColor: const Color(0xFFDCFCE7),
-                  iconColor: const Color(0xFF16A34A),
                   onTap: () async {
                     Navigator.pop(context);
                     try {
@@ -134,10 +145,12 @@ class NjShareSheet extends StatelessWidget {
 
                 // 2. Telegram
                 _buildShareTarget(
-                  icon: Icons.send_rounded,
+                  iconWidget: const SocialBrandIcon.telegram(
+                    size: 28,
+                    withBackground: true,
+                    containerSize: 54,
+                  ),
                   label: 'Telegram',
-                  bgColor: const Color(0xFFE0F2FE),
-                  iconColor: const Color(0xFF0284C7),
                   onTap: () async {
                     Navigator.pop(context);
                     try {
@@ -193,10 +206,11 @@ class NjShareSheet extends StatelessWidget {
   }
 
   Widget _buildShareTarget({
-    required IconData icon,
+    Widget? iconWidget,
+    IconData? icon,
     required String label,
-    required Color bgColor,
-    required Color iconColor,
+    Color? bgColor,
+    Color? iconColor,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -207,22 +221,25 @@ class NjShareSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: iconColor.withOpacity(0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          if (iconWidget != null)
+            iconWidget
+          else
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (iconColor ?? Colors.black26).withOpacity(0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
           const SizedBox(height: 8),
           Text(
             label,

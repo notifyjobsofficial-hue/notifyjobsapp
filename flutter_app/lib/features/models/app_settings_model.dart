@@ -47,6 +47,10 @@ class AppSettingsModel {
 
   final String shareBaseUrl;
   final String playStoreUrl;
+  final String websiteUrl;
+  final bool shareEnabled;
+  final String shareTargetMode; // 'PLAY_STORE', 'WEBSITE', 'SMART'
+  final String shareMessageTemplate;
   final String disclaimer;
 
   // Announcement Banner (v1.1)
@@ -157,6 +161,11 @@ class AppSettingsModel {
     this.shareBaseUrl = '',
     this.playStoreUrl =
         'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
+    this.websiteUrl = 'https://notifyjobs.in',
+    this.shareEnabled = true,
+    this.shareTargetMode = 'SMART',
+    this.shareMessageTemplate =
+        '{title}\n\nOrganization: {organization}\nVacancies: {vacancies}\nLast Date: {lastDate}\n\nCheck official details & apply:\n{shareUrl}\n\nGet Notify Jobs for instant job alerts:\n{playStoreUrl}',
     this.disclaimer =
         'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
 
@@ -299,6 +308,15 @@ class AppSettingsModel {
       shareBaseUrl: map['shareBaseUrl']?.toString() ?? '',
       playStoreUrl: map['playStoreUrl']?.toString() ??
           'https://play.google.com/store/apps/details?id=com.notifyjobs.app',
+      websiteUrl: map['websiteUrl']?.toString() ??
+          map['supportWebsite']?.toString() ??
+          (map['shareBaseUrl']?.toString().isNotEmpty == true
+              ? map['shareBaseUrl']!.toString()
+              : 'https://notifyjobs.in'),
+      shareEnabled: map['shareEnabled'] != false,
+      shareTargetMode: map['shareTargetMode']?.toString() ?? 'SMART',
+      shareMessageTemplate: map['shareMessageTemplate']?.toString() ??
+          '{title}\n\nOrganization: {organization}\nVacancies: {vacancies}\nLast Date: {lastDate}\n\nCheck official details & apply:\n{shareUrl}\n\nGet Notify Jobs for instant job alerts:\n{playStoreUrl}',
       disclaimer: map['disclaimer']?.toString() ??
           'Notify Jobs is an independent informational platform and is not affiliated with any government department. Users should verify recruitment information from the official source before applying.',
 

@@ -541,6 +541,17 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
     }
   );
 
+  // Per-Post Share Settings Override
+  const [shareTargetModeOverride, setShareTargetModeOverride] = useState<
+    'GLOBAL' | 'PLAY_STORE' | 'WEBSITE' | 'CUSTOM_URL'
+  >(initialItem?.shareTargetModeOverride || 'GLOBAL');
+  const [customShareUrl, setCustomShareUrl] = useState(
+    initialItem?.customShareUrl || ''
+  );
+  const [customShareText, setCustomShareText] = useState(
+    initialItem?.customShareText || ''
+  );
+
   // Mobile Preview State
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -770,6 +781,11 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
       allowNotifications,
       appDisplayControls,
 
+      // Per-Post Share Override
+      shareTargetModeOverride,
+      customShareUrl: customShareUrl.trim() || undefined,
+      customShareText: customShareText.trim() || undefined,
+
       // Parent Link
       parentRecruitmentId,
       parentRecruitmentTitle,
@@ -798,7 +814,8 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
         payload.status = targetStatus;
         payload.isPublished = targetStatus === 'published';
       }
-      await onSave(payload, allowNotifications && payload.isPublished === true, 'all_jobs');
+      const pushTopic = payload.contentType === 'andaman_job' ? 'andaman' : 'all_users';
+      await onSave(payload, allowNotifications && payload.isPublished === true, pushTopic);
       setSaveSuccessMessage('Saved successfully!');
       setTimeout(() => setSaveSuccessMessage(''), 3000);
     } catch (err: any) {
@@ -2278,6 +2295,91 @@ export const ContentEditorPage: React.FC<ContentEditorPageProps> = ({
                         />
                       </label>
                     )}
+                  </div>
+                </AdminCard>
+
+                {/* 4. SHARE DESTINATION & CUSTOMIZATION (Per-Post Override) */}
+                <AdminCard
+                  title="4. Share Destination & Customization"
+                  subtitle="Control where users are directed when sharing this specific post"
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                          Share Target Destination
+                        </label>
+                        <select
+                          value={shareTargetModeOverride}
+                          onChange={(e) =>
+                            setShareTargetModeOverride(
+                              e.target.value as
+                                | 'GLOBAL'
+                                | 'PLAY_STORE'
+                                | 'WEBSITE'
+                                | 'CUSTOM_URL'
+                            )
+                          }
+                          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#FF5A00]/20 focus:border-[#FF5A00]"
+                        >
+                          <option value="GLOBAL">
+                            GLOBAL (Use Global Setting: SMART / Website / Play Store)
+                          </option>
+                          <option value="PLAY_STORE">
+                            PLAY_STORE (Direct Google Play Store Link)
+                          </option>
+                          <option value="WEBSITE">
+                            WEBSITE (Direct Web Portal /jobs/{slug})
+                          </option>
+                          <option value="CUSTOM_URL">
+                            CUSTOM_URL (Specific External / Campaign Link)
+                          </option>
+                        </select>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          {shareTargetModeOverride === 'GLOBAL' &&
+                            'Uses the global SMART mode configured in Social & Support.'}
+                          {shareTargetModeOverride === 'PLAY_STORE' &&
+                            'Forces shared link to point directly to Google Play Store.'}
+                          {shareTargetModeOverride === 'WEBSITE' &&
+                            'Forces shared link to point to this notification’s web page slug.'}
+                          {shareTargetModeOverride === 'CUSTOM_URL' &&
+                            'Directs shared links to your specified HTTPS URL.'}
+                        </p>
+                      </div>
+
+                      {shareTargetModeOverride === 'CUSTOM_URL' && (
+                        <div>
+                          <AdminInput
+                            label="Custom Share URL (Must be HTTPS)"
+                            value={customShareUrl}
+                            onChange={(e) => setCustomShareUrl(e.target.value)}
+                            placeholder="https://notifyjobs.in/special-recruitment"
+                          />
+                          {customShareUrl &&
+                            !customShareUrl.startsWith('https://') && (
+                              <p className="text-[11px] text-rose-500 mt-1">
+                                Warning: URL must start with https:// for safe mobile app sharing.
+                              </p>
+                            )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Custom Share Text Override (Optional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={customShareText}
+                        onChange={(e) => setCustomShareText(e.target.value)}
+                        placeholder="Leave blank to use the standard global recruitment share message..."
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-[#FF5A00]/20 focus:border-[#FF5A00]"
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Leave empty to format automatically with title, organization, vacancies, and last date.
+                      </p>
+                    </div>
                   </div>
                 </AdminCard>
 
